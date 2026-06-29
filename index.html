@@ -107,14 +107,22 @@
   .qbtns button{padding:6px 10px;background:var(--panel2);color:var(--muted);border:1px solid var(--border);font-size:11px;}
   .hold-info{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7;}
 
-  .news-feed{max-height:260px;overflow-y:auto;}
+  .news-feed{max-height:380px;overflow-y:auto;padding-right:4px;}
   .news-item{
-    padding:10px 0;border-bottom:1px solid var(--panel2);font-size:13px;line-height:1.45;
+    padding:11px 0;border-bottom:1px solid var(--panel2);font-size:13px;line-height:1.45;
   }
-  .news-item .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;margin-right:8px;text-transform:uppercase;}
+  .news-top{display:flex;align-items:flex-start;gap:8px;}
+  .news-head{font-weight:600;}
+  .news-detail{color:var(--muted);font-size:11.5px;margin-top:4px;line-height:1.45;}
+  .news-meta{display:flex;align-items:center;gap:8px;margin-top:6px;}
+  .news-item .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
   .tag.good{background:rgba(22,199,132,.15);color:var(--green);}
   .tag.bad{background:rgba(234,57,67,.15);color:var(--red);}
   .tag.neutral{background:rgba(125,141,163,.15);color:var(--muted);}
+  .tag.market{background:rgba(240,185,11,.15);color:var(--accent);}
+  .move-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;}
+  .move-chip.up{background:rgba(22,199,132,.15);color:var(--green);}
+  .move-chip.down{background:rgba(234,57,67,.15);color:var(--red);}
   .news-item .time{font-size:10px;color:var(--muted);}
 
   .holdings-row td{font-size:13px;}
@@ -270,24 +278,62 @@ const STOCK_DEFS = [
   {sym:'AERO', name:'AeroSpace Dynamics',sector:'Industry',price:112.0, vol:0.032, drift:0.0005},
 ];
 
+/* news helpers */
+const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
+const pctTxt = p => (p>=0?'+':'')+p.toFixed(2)+'%';
+const ANALYSTS = ['Goldman Stanley','Morgan Sachs','J.P. Halloran','Citibridge','Barcourt Capital',
+  'Evercore Peak','Wedwood Securities','Lazlo & Co.','Northpoint Research'];
+
+// Individual-stock news: a headline plus a supporting detail line.
 const NEWS_TEMPLATES = [
-  {t:'good', mult:1.0,  txt:s=>`${s.name} (${s.sym}) beats earnings expectations; analysts upgrade.`},
-  {t:'good', mult:1.4,  txt:s=>`Breakthrough product launch lifts ${s.sym} — investors pile in.`},
-  {t:'good', mult:0.9,  txt:s=>`${s.name} announces share buyback program.`},
-  {t:'good', mult:1.2,  txt:s=>`Major contract win boosts ${s.sym} outlook.`},
-  {t:'bad',  mult:1.0,  txt:s=>`${s.name} (${s.sym}) misses revenue targets; shares slide.`},
-  {t:'bad',  mult:1.5,  txt:s=>`Regulatory probe hits ${s.sym}; uncertainty spikes.`},
-  {t:'bad',  mult:1.1,  txt:s=>`${s.name} cuts guidance amid weak demand.`},
-  {t:'bad',  mult:1.3,  txt:s=>`Product recall weighs on ${s.sym}.`},
+  // ---- bullish ----
+  {t:'good', mult:1.2, head:s=>`${s.name} (${s.sym}) tops quarterly earnings estimates`,
+    detail:s=>`Revenue beat consensus by a wide margin; ${rnd(ANALYSTS)} reiterates a Buy rating.`},
+  {t:'good', mult:1.5, head:s=>`${s.sym} unveils breakthrough product to strong demand`,
+    detail:s=>`Pre-orders are running well ahead of forecasts, triggering a rush of buy orders.`},
+  {t:'good', mult:0.9, head:s=>`${s.name} approves a sizable share buyback`,
+    detail:s=>`Management signals confidence; a smaller share count should lift earnings per share.`},
+  {t:'good', mult:1.3, head:s=>`${s.name} lands a major multi-year contract`,
+    detail:s=>`The award is expected to add steady, recurring revenue for several years.`},
+  {t:'good', mult:1.0, head:s=>`${rnd(ANALYSTS)} upgrades ${s.sym} to Overweight`,
+    detail:s=>`Analysts point to improving margins and accelerating market-share gains.`},
+  {t:'good', mult:1.1, head:s=>`${s.name} raises its dividend on strong cash flow`,
+    detail:s=>`Income investors cheer the hike as a vote of confidence in the balance sheet.`},
+  {t:'good', mult:1.4, head:s=>`Takeover speculation swirls around ${s.sym}`,
+    detail:s=>`Traders bid the stock up on chatter that a larger rival may be circling.`},
+  // ---- bearish ----
+  {t:'bad', mult:1.2, head:s=>`${s.name} (${s.sym}) misses revenue targets`,
+    detail:s=>`Soft demand drags results below consensus; ${rnd(ANALYSTS)} trims its estimates.`},
+  {t:'bad', mult:1.6, head:s=>`Regulators open a probe into ${s.name}`,
+    detail:s=>`Uncertainty over potential fines sends nervous holders rushing for the exits.`},
+  {t:'bad', mult:1.1, head:s=>`${s.sym} cuts its full-year guidance`,
+    detail:s=>`The company blames weakening demand and rising input costs for the downgrade.`},
+  {t:'bad', mult:1.3, head:s=>`Product recall hits ${s.name}`,
+    detail:s=>`Warranty and replacement costs are expected to dent next quarter's profit.`},
+  {t:'bad', mult:1.0, head:s=>`${rnd(ANALYSTS)} downgrades ${s.sym} to Underweight`,
+    detail:s=>`Stretched valuation and slowing growth prompt the rating cut.`},
+  {t:'bad', mult:1.4, head:s=>`${s.name} CEO resigns unexpectedly`,
+    detail:s=>`The abrupt leadership change raises fresh questions about strategy and stability.`},
+  {t:'bad', mult:1.2, head:s=>`Lawsuit filed against ${s.name}`,
+    detail:s=>`Potential legal liabilities cloud the outlook and weigh on sentiment.`},
 ];
 
+// Sector-wide news affecting every stock in the sector.
 const SECTOR_NEWS = [
-  {t:'good', sector:'Tech',    txt:'Tech rally: AI optimism drives the sector higher.'},
-  {t:'bad',  sector:'Tech',   txt:'Tech selloff as interest-rate fears resurface.'},
-  {t:'good', sector:'Energy',  txt:'Energy stocks surge on rising commodity prices.'},
-  {t:'bad',  sector:'Energy',  txt:'Energy sector dips as oil demand forecasts weaken.'},
-  {t:'good', sector:'Health',  txt:'Healthcare names climb on positive trial data.'},
-  {t:'bad',  sector:'Finance', txt:'Banking sector pressured by credit concerns.'},
+  {t:'good', sector:'Tech',     head:'Tech rally as AI optimism sweeps the market', detail:'Investors rotate into growth names, lifting the entire sector.'},
+  {t:'bad',  sector:'Tech',     head:'Tech selloff as interest-rate fears resurface', detail:'Higher-for-longer rate talk pressures richly valued shares.'},
+  {t:'good', sector:'Energy',   head:'Energy stocks surge on rising crude prices', detail:'Supply concerns push oil higher, fattening producer margins.'},
+  {t:'bad',  sector:'Energy',   head:'Energy slides as demand forecasts weaken', detail:'A softer growth outlook drags crude and energy equities lower.'},
+  {t:'good', sector:'Health',   head:'Healthcare climbs on positive trial data', detail:'Encouraging clinical results lift sentiment across the group.'},
+  {t:'bad',  sector:'Health',   head:'Health names slip on drug-pricing pressure', detail:'Policy chatter about price caps weighs on the sector.'},
+  {t:'good', sector:'Finance',  head:'Banks rally as lending margins widen', detail:'A steeper yield curve brightens the outlook for lenders.'},
+  {t:'bad',  sector:'Finance',  head:'Banking sector pressured by credit concerns', detail:'Worries over rising loan defaults spark a broad pullback.'},
+  {t:'good', sector:'Mining',   head:'Miners gain as metal prices firm up', detail:'A weaker dollar and steady industrial demand support the group.'},
+  {t:'bad',  sector:'Mining',   head:'Miners retreat as commodity prices cool', detail:'Profit-taking hits the group after a recent run higher.'},
+  {t:'good', sector:'Retail',   head:'Retailers jump on upbeat consumer-spending data', detail:'Resilient shoppers brighten the sales outlook for the sector.'},
+  {t:'bad',  sector:'Retail',   head:'Retailers dip on soft consumer-spending data', detail:'Shoppers tighten budgets, denting the near-term sales outlook.'},
+  {t:'good', sector:'Industry', head:'Industrials advance on factory-orders beat', detail:'Stronger manufacturing data lifts the cyclical names.'},
+  {t:'bad',  sector:'Industry', head:'Industrials fall as factory activity contracts', detail:'A weak manufacturing reading dents demand expectations.'},
 ];
 
 let state;
@@ -338,29 +384,26 @@ function advanceDay(){
   state.marketMood += gaussian()*0.15 - state.marketMood*0.1;
   state.marketMood = Math.max(-1, Math.min(1, state.marketMood));
 
-  // Track sector shocks for the day
-  const sectorShock = {};
+  const sectorShock = {};   // sector -> return shock this day
+  const stockShock  = {};   // symbol -> return shock this day
+  const pending     = [];   // driver-news items created before prices move
 
-  // Random market-wide / sector news (~35% of days)
-  if(Math.random()<0.35){
-    if(Math.random()<0.5){
-      // sector news
-      const n = SECTOR_NEWS[Math.floor(Math.random()*SECTOR_NEWS.length)];
-      const strength = (n.t==='good'?1:-1)*(0.02+Math.random()*0.04);
-      sectorShock[n.sector]=(sectorShock[n.sector]||0)+strength;
-      pushNews(n.t, n.txt);
-    }
+  // Sector-wide news (~32% of days)
+  if(Math.random()<0.32){
+    const n = rnd(SECTOR_NEWS);
+    const strength = (n.t==='good'?1:-1)*(0.02+Math.random()*0.04);
+    sectorShock[n.sector] = (sectorShock[n.sector]||0)+strength;
+    pending.push({type:n.t, head:n.head, detail:n.detail, sector:n.sector, day:state.day, change:null});
   }
 
-  // Per-stock individual news (~12% chance each)
-  const stockShock = {};
+  // Per-stock individual news (~10% chance each)
   state.stocks.forEach(s=>{
     if(Math.random()<0.10){
-      const tmpl = NEWS_TEMPLATES[Math.floor(Math.random()*NEWS_TEMPLATES.length)];
-      const dir = tmpl.t==='good'?1:-1;
-      const mag = (0.03+Math.random()*0.09)*tmpl.mult;
-      stockShock[s.sym]=dir*mag;
-      pushNews(tmpl.t, tmpl.txt(s));
+      const tmpl = rnd(NEWS_TEMPLATES);
+      const dir  = tmpl.t==='good'?1:-1;
+      const mag  = (0.03+Math.random()*0.09)*tmpl.mult;
+      stockShock[s.sym] = (stockShock[s.sym]||0)+dir*mag;
+      pending.push({type:tmpl.t, head:tmpl.head(s), detail:tmpl.detail(s), sym:s.sym, day:state.day, change:null});
     }
   });
 
@@ -370,12 +413,14 @@ function advanceDay(){
     const mag = 0.06+Math.random()*0.10;
     state.marketMood += crash?-0.8:0.6;
     state.stocks.forEach(s=> stockShock[s.sym]=(stockShock[s.sym]||0)+(crash?-mag:mag)*(0.6+Math.random()*0.8));
-    pushNews(crash?'bad':'good',
-      crash? '🚨 MARKET CRASH! Panic selling sweeps the exchange.'
-           : '🚀 MARKET BOOM! A wave of buying lifts all stocks.');
+    pending.push({type:crash?'bad':'good', market:true, day:state.day, change:null,
+      head: crash?'🚨 MARKET CRASH! Panic selling sweeps the exchange'
+                 :'🚀 MARKET MELT-UP! A wave of buying lifts nearly every stock',
+      detail: crash?'Fear grips traders as sell orders cascade across all sectors at once.'
+                   :'Euphoria takes hold as buyers chase almost every name sharply higher.'});
   }
 
-  // Update each stock price
+  // ---- Update each stock price ----
   state.stocks.forEach(s=>{
     s.prevClose = s.price;
 
@@ -397,14 +442,77 @@ function advanceDay(){
     if(s.history.length>120) s.history.shift();
   });
 
+  // ---- Second pass: make the news reflect what actually happened ----
+  const changes = state.stocks.map(s=>({s, pc:pctChange(s)}));
+  const explained = new Set();
+
+  // Attach each driver headline's realized move so the words match the chart
+  pending.forEach(item=>{
+    if(item.sym){
+      item.change = pctChange(state.stocks.find(x=>x.sym===item.sym));
+      explained.add(item.sym);
+    }else if(item.sector){
+      const grp = changes.filter(c=>c.s.sector===item.sector);
+      item.change = grp.reduce((a,c)=>a+c.pc,0)/grp.length;
+    }else if(item.market){
+      item.change = changes.reduce((a,c)=>a+c.pc,0)/changes.length;
+    }
+  });
+  // Push driver news (oldest first so they sit just under the daily wrap)
+  pending.forEach(it=> state.news.unshift(it));
+
+  // Reactive explainer: a big move with no headline behind it still gets reported
+  const bigMovers = changes.filter(c=>Math.abs(c.pc)>5 && !explained.has(c.s.sym));
+  if(bigMovers.length && Math.random()<0.85){
+    const m = rnd(bigMovers), up = m.pc>0;
+    const upWhy = ['bargain hunters step in after recent weakness','momentum traders pile into the move',
+                   'short sellers scramble to cover positions','retail buyers chase the rally','unusually heavy call-option buying'];
+    const dnWhy = ['traders lock in profits after a strong run','risk-off selling sweeps the name',
+                   'momentum funds head for the exits','stop-loss orders trigger a cascade','heavy put-option activity'];
+    state.news.unshift({type:up?'good':'bad', sym:m.s.sym, day:state.day, change:m.pc,
+      head:`${m.s.name} (${m.s.sym}) ${up?'jumps':'tumbles'} ${pctTxt(m.pc)} on heavy volume`,
+      detail:`No fresh company headlines — ${rnd(up?upWhy:dnWhy)}.`});
+  }
+
+  // ---- Daily Market Wrap: always reflects the real session ----
+  generateMarketWrap(changes);
+
+  while(state.news.length>60) state.news.pop();
+
   renderAll();
   save();
   checkMilestones();
 }
 
-function pushNews(type, text){
-  state.news.unshift({type, text, day:state.day});
-  if(state.news.length>40) state.news.pop();
+// Builds a summary headline from the day's actual price action.
+function generateMarketWrap(changes){
+  const avg = changes.reduce((a,c)=>a+c.pc,0)/changes.length;
+  const adv = changes.filter(c=>c.pc>0).length;
+  const dec = changes.filter(c=>c.pc<0).length;
+  const sorted = [...changes].sort((a,b)=>b.pc-a.pc);
+  const top = sorted[0], bot = sorted[sorted.length-1];
+
+  // Best & worst sector of the day
+  const secAgg = {};
+  changes.forEach(c=>{ (secAgg[c.s.sector]=secAgg[c.s.sector]||[]).push(c.pc); });
+  const secAvg = Object.entries(secAgg).map(([k,v])=>({k, m:v.reduce((a,b)=>a+b,0)/v.length}))
+                       .sort((a,b)=>b.m-a.m);
+  const bestSec = secAvg[0], worstSec = secAvg[secAvg.length-1];
+
+  const type = avg>0.15?'good':avg<-0.15?'bad':'neutral';
+  let head;
+  if(avg>=1.5)       head=`Market Wrap: stocks rip higher, index ${pctTxt(avg)}`;
+  else if(avg>=0.15) head=`Market Wrap: a green session, index ${pctTxt(avg)}`;
+  else if(avg>-0.15) head=`Market Wrap: a flat, mixed session (${pctTxt(avg)})`;
+  else if(avg>-1.5)  head=`Market Wrap: stocks drift lower, index ${pctTxt(avg)}`;
+  else               head=`Market Wrap: broad selloff, index ${pctTxt(avg)}`;
+
+  const breadth = `${adv} advancers vs ${dec} decliners.`;
+  const leaders = `${bestSec.k} led (${pctTxt(bestSec.m)}), ${worstSec.k} lagged (${pctTxt(worstSec.m)}).`;
+  const movers  = `Top gainer ${top.s.sym} ${pctTxt(top.pc)}; worst ${bot.s.sym} ${pctTxt(bot.pc)}.`;
+  const detail  = `${breadth} ${leaders} ${movers}`;
+
+  state.news.unshift({type, market:true, wrap:true, head, detail, day:state.day, change:avg});
 }
 
 /* ---------------- trading ---------------- */
@@ -534,8 +642,20 @@ function renderNews(){
   state.news.forEach(n=>{
     const div=document.createElement('div');
     div.className='news-item';
-    const cls=n.type==='good'?'good':n.type==='bad'?'bad':'neutral';
-    div.innerHTML=`<span class="tag ${cls}">${n.type==='good'?'▲ Bull':n.type==='bad'?'▼ Bear':'• Info'}</span>${n.text} <span class="time">— Day ${n.day}</span>`;
+    const isMarket = n.market;
+    const cls = isMarket ? 'market' : (n.type==='good'?'good':n.type==='bad'?'bad':'neutral');
+    const tagTxt = n.wrap ? '📊 Wrap' : isMarket ? '⚡ Market'
+                 : n.type==='good' ? '▲ Bull' : n.type==='bad' ? '▼ Bear' : '• Info';
+    let chip='';
+    if(n.change!==null && n.change!==undefined){
+      const ccls = n.change>=0?'up':'down';
+      const lbl = n.sym ? `${n.sym} ${pctTxt(n.change)}` : `Index ${pctTxt(n.change)}`;
+      chip = `<span class="move-chip ${ccls}">${lbl}</span>`;
+    }
+    div.innerHTML=`
+      <div class="news-top"><span class="tag ${cls}">${tagTxt}</span><span class="news-head">${n.head||n.text||''}</span></div>
+      ${n.detail?`<div class="news-detail">${n.detail}</div>`:''}
+      <div class="news-meta">${chip}<span class="time">Day ${n.day}</span></div>`;
     f.appendChild(div);
   });
 }
