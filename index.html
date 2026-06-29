@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WALL STREET TYCOON — Stock Market Simulator</title>
+<style>
+  :root{
+    --bg:#0a0e17;
+    --panel:#111826;
+    --panel2:#0d141f;
+    --border:#1f2c3d;
+    --text:#e6edf3;
+    --muted:#7d8da3;
+    --green:#16c784;
+    --red:#ea3943;
+    --accent:#f0b90b;
+    --blue:#3b82f6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#15233a 0%,var(--bg) 55%);
+    color:var(--text);
+    min-height:100vh;
+    padding:18px;
+    font-size:14px;
+  }
+  .wrap{max-width:1280px;margin:0 auto;}
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:14px;margin-bottom:16px;
+  }
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo h1{
+    font-size:22px;letter-spacing:1px;
+    background:linear-gradient(90deg,var(--accent),#ffd65a);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    font-weight:800;
+  }
+  .logo .sub{color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase;}
+  .ticker-badge{font-size:30px;}
+
+  .stats{display:flex;gap:10px;flex-wrap:wrap;}
+  .stat{
+    background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:9px 16px;min-width:120px;
+  }
+  .stat .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .stat .val{font-size:19px;font-weight:700;margin-top:2px;}
+
+  .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  button{
+    font-family:inherit;cursor:pointer;border:none;border-radius:8px;
+    padding:9px 16px;font-weight:600;font-size:13px;transition:.15s;
+  }
+  button:active{transform:translateY(1px);}
+  .btn-primary{background:var(--accent);color:#1a1205;}
+  .btn-primary:hover{background:#ffc928;}
+  .btn-ghost{background:var(--panel);color:var(--text);border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--accent);}
+  .btn-danger{background:var(--red);color:#fff;}
+  .day-pill{
+    background:var(--panel);border:1px solid var(--border);border-radius:20px;
+    padding:8px 16px;font-weight:700;
+  }
+  .speed-group{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:3px;}
+  .speed-group button{padding:6px 12px;background:transparent;color:var(--muted);font-size:12px;}
+  .speed-group button.active{background:var(--accent);color:#1a1205;}
+
+  .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;}
+  @media(max-width:960px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:16px;
+  }
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;}
+
+  table{width:100%;border-collapse:collapse;}
+  th{
+    text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;
+    color:var(--muted);padding:8px 6px;border-bottom:1px solid var(--border);font-weight:600;
+  }
+  th.r,td.r{text-align:right;}
+  td{padding:10px 6px;border-bottom:1px solid var(--panel2);}
+  tr.stock-row{cursor:pointer;transition:.12s;}
+  tr.stock-row:hover{background:#16202f;}
+  tr.stock-row.sel{background:#16263a;box-shadow:inset 3px 0 0 var(--accent);}
+  .sym{font-weight:700;}
+  .name{font-size:11px;color:var(--muted);}
+  .up{color:var(--green);}
+  .down{color:var(--red);}
+  .spark{display:block;}
+
+  .chart-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
+  .chart-head .big{font-size:26px;font-weight:800;}
+  .chart-head .pct{font-size:15px;font-weight:700;}
+  #chart{width:100%;height:230px;background:var(--panel2);border-radius:10px;}
+
+  .trade{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+  .trade input{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:9px;width:90px;font-family:inherit;font-size:14px;
+  }
+  .qbtns{display:flex;gap:5px;}
+  .qbtns button{padding:6px 10px;background:var(--panel2);color:var(--muted);border:1px solid var(--border);font-size:11px;}
+  .hold-info{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7;}
+
+  .news-feed{max-height:260px;overflow-y:auto;}
+  .news-item{
+    padding:10px 0;border-bottom:1px solid var(--panel2);font-size:13px;line-height:1.45;
+  }
+  .news-item .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;margin-right:8px;text-transform:uppercase;}
+  .tag.good{background:rgba(22,199,132,.15);color:var(--green);}
+  .tag.bad{background:rgba(234,57,67,.15);color:var(--red);}
+  .tag.neutral{background:rgba(125,141,163,.15);color:var(--muted);}
+  .news-item .time{font-size:10px;color:var(--muted);}
+
+  .holdings-row td{font-size:13px;}
+  .empty{color:var(--muted);font-style:italic;padding:14px 6px;font-size:13px;}
+
+  .toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:50;}
+  .toast{
+    background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--accent);
+    padding:11px 16px;border-radius:8px;font-size:13px;animation:slide .3s ease;max-width:300px;
+  }
+  .toast.win{border-left-color:var(--green);}
+  .toast.lose{border-left-color:var(--red);}
+  @keyframes slide{from{transform:translateX(120%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+  .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:18px;line-height:1.6;}
+  .pl-pos{color:var(--green);}.pl-neg{color:var(--red);}
+
+  /* Modal */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;
+    align-items:center;justify-content:center;z-index:100;padding:20px;
+  }
+  .modal-bg.show{display:flex;}
+  .modal{
+    background:var(--panel);border:1px solid var(--border);border-radius:16px;
+    padding:28px;max-width:440px;text-align:center;
+  }
+  .modal h2{font-size:24px;margin-bottom:10px;color:var(--accent);}
+  .modal p{color:var(--muted);line-height:1.6;margin-bottom:18px;}
+  .modal .figure{font-size:34px;font-weight:800;margin:10px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <span class="ticker-badge">📈</span>
+      <div>
+        <h1>WALL STREET TYCOON</h1>
+        <div class="sub">Simulated Equity Markets</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="label">Cash</div><div class="val" id="cash">$1,000.00</div></div>
+      <div class="stat"><div class="label">Holdings Value</div><div class="val" id="holdval">$0.00</div></div>
+      <div class="stat"><div class="label">Net Worth</div><div class="val" id="networth">$1,000.00</div></div>
+      <div class="stat"><div class="label">Total P/L</div><div class="val" id="totalpl">$0.00</div></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="day-pill">📅 Day <span id="day">1</span></div>
+    <button class="btn-primary" id="nextDay">Advance Day ▶</button>
+    <div class="speed-group" id="speedGroup">
+      <button data-speed="0" class="active">Paused</button>
+      <button data-speed="2000">1×</button>
+      <button data-speed="1000">2×</button>
+      <button data-speed="400">5×</button>
+    </div>
+    <button class="btn-ghost" id="resetBtn">↺ Reset Game</button>
+    <span style="color:var(--muted);font-size:12px;margin-left:auto;">Market sentiment: <strong id="sentiment">Neutral</strong></span>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="chart-head">
+          <div>
+            <div id="chartSym" style="font-size:13px;color:var(--muted);letter-spacing:1px;">SELECT A STOCK</div>
+            <div class="big" id="chartPrice">—</div>
+          </div>
+          <div class="pct" id="chartPct"></div>
+        </div>
+        <canvas id="chart"></canvas>
+        <div class="trade" id="tradePanel" style="display:none;">
+          <div class="qbtns">
+            <button data-q="1">1</button>
+            <button data-q="5">5</button>
+            <button data-q="10">10</button>
+            <button data-q="max">MAX</button>
+          </div>
+          <input type="number" id="qty" min="1" value="1">
+          <button class="btn-primary" id="buyBtn">Buy</button>
+          <button class="btn-danger" id="sellBtn">Sell</button>
+          <div class="hold-info" id="holdInfo"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Market — Click a stock to trade</h2>
+        <table>
+          <thead>
+            <tr><th>Symbol</th><th class="r">Price</th><th class="r">Day %</th><th class="r">Trend</th><th class="r">Owned</th></tr>
+          </thead>
+          <tbody id="marketBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h2>Your Portfolio</h2>
+        <table>
+          <thead>
+            <tr><th>Sym</th><th class="r">Shares</th><th class="r">Avg Cost</th><th class="r">Value</th><th class="r">P/L</th></tr>
+          </thead>
+          <tbody id="portBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>📰 Market News</h2>
+        <div class="news-feed" id="newsFeed"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    This is a simulated market for entertainment & education — prices follow a geometric random walk with volatility, momentum, sector correlation, and random news shocks.<br>
+    Not financial advice. Goal: grow your $1,000 as large as you can. Markets can crash. Diversify, time your entries, and watch the news.
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Game Over</h2>
+    <div class="figure" id="modalFigure"></div>
+    <p id="modalText"></p>
+    <button class="btn-primary" onclick="document.getElementById('modalBg').classList.remove('show')">Continue Playing</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   WALL STREET TYCOON  —  simulated stock market engine
+   ============================================================ */
+
+const START_CASH = 1000;
+
+// Stock definitions. Each has a sector, baseline volatility & drift.
+const STOCK_DEFS = [
+  {sym:'NOVA', name:'Nova Robotics',     sector:'Tech',    price:42.0,  vol:0.035, drift:0.0006},
+  {sym:'BYTE', name:'ByteForge Cloud',   sector:'Tech',    price:128.5, vol:0.030, drift:0.0007},
+  {sym:'HELX', name:'Helix Biotech',     sector:'Health',  price:18.7,  vol:0.055, drift:0.0009},
+  {sym:'MEDI', name:'MediCore Labs',     sector:'Health',  price:74.3,  vol:0.028, drift:0.0004},
+  {sym:'PETRO',name:'Petrol Global',     sector:'Energy',  price:56.1,  vol:0.026, drift:0.0002},
+  {sym:'SOLR', name:'SolarWave Energy',  sector:'Energy',  price:23.4,  vol:0.045, drift:0.0008},
+  {sym:'GOLD', name:'Auric Mining Co.',  sector:'Mining',  price:91.0,  vol:0.022, drift:0.0001},
+  {sym:'BANC', name:'First Capital Bank',sector:'Finance', price:64.8,  vol:0.020, drift:0.0003},
+  {sym:'SHOP', name:'MegaMart Retail',   sector:'Retail',  price:33.9,  vol:0.024, drift:0.0003},
+  {sym:'AERO', name:'AeroSpace Dynamics',sector:'Industry',price:112.0, vol:0.032, drift:0.0005},
+];
+
+const NEWS_TEMPLATES = [
+  {t:'good', mult:1.0,  txt:s=>`${s.name} (${s.sym}) beats earnings expectations; analysts upgrade.`},
+  {t:'good', mult:1.4,  txt:s=>`Breakthrough product launch lifts ${s.sym} — investors pile in.`},
+  {t:'good', mult:0.9,  txt:s=>`${s.name} announces share buyback program.`},
+  {t:'good', mult:1.2,  txt:s=>`Major contract win boosts ${s.sym} outlook.`},
+  {t:'bad',  mult:1.0,  txt:s=>`${s.name} (${s.sym}) misses revenue targets; shares slide.`},
+  {t:'bad',  mult:1.5,  txt:s=>`Regulatory probe hits ${s.sym}; uncertainty spikes.`},
+  {t:'bad',  mult:1.1,  txt:s=>`${s.name} cuts guidance amid weak demand.`},
+  {t:'bad',  mult:1.3,  txt:s=>`Product recall weighs on ${s.sym}.`},
+];
+
+const SECTOR_NEWS = [
+  {t:'good', sector:'Tech',    txt:'Tech rally: AI optimism drives the sector higher.'},
+  {t:'bad',  sector:'Tech',   txt:'Tech selloff as interest-rate fears resurface.'},
+  {t:'good', sector:'Energy',  txt:'Energy stocks surge on rising commodity prices.'},
+  {t:'bad',  sector:'Energy',  txt:'Energy sector dips as oil demand forecasts weaken.'},
+  {t:'good', sector:'Health',  txt:'Healthcare names climb on positive trial data.'},
+  {t:'bad',  sector:'Finance', txt:'Banking sector pressured by credit concerns.'},
+];
+
+let state;
+
+function freshState(){
+  return {
+    day:1,
+    cash:START_CASH,
+    stocks:STOCK_DEFS.map(d=>({
+      ...d,
+      price:d.price,
+      prevClose:d.price,
+      history:[d.price],
+      momentum:0,
+      shares:0,
+      avgCost:0,
+    })),
+    news:[],
+    selected:0,
+    marketMood:0, // -1..1 broad market sentiment
+  };
+}
+
+/* ---------------- persistence ---------------- */
+function save(){
+  try{ localStorage.setItem('wst_save', JSON.stringify(state)); }catch(e){}
+}
+function load(){
+  try{
+    const raw=localStorage.getItem('wst_save');
+    if(raw){ const s=JSON.parse(raw); if(s&&s.stocks) return s; }
+  }catch(e){}
+  return null;
+}
+
+/* ---------------- simulation ---------------- */
+function gaussian(){
+  let u=0,v=0;
+  while(u===0)u=Math.random();
+  while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+function advanceDay(){
+  state.day++;
+
+  // Evolve broad market mood (mean-reverting random walk)
+  state.marketMood += gaussian()*0.15 - state.marketMood*0.1;
+  state.marketMood = Math.max(-1, Math.min(1, state.marketMood));
+
+  // Track sector shocks for the day
+  const sectorShock = {};
+
+  // Random market-wide / sector news (~35% of days)
+  if(Math.random()<0.35){
+    if(Math.random()<0.5){
+      // sector news
+      const n = SECTOR_NEWS[Math.floor(Math.random()*SECTOR_NEWS.length)];
+      const strength = (n.t==='good'?1:-1)*(0.02+Math.random()*0.04);
+      sectorShock[n.sector]=(sectorShock[n.sector]||0)+strength;
+      pushNews(n.t, n.txt);
+    }
+  }
+
+  // Per-stock individual news (~12% chance each)
+  const stockShock = {};
+  state.stocks.forEach(s=>{
+    if(Math.random()<0.10){
+      const tmpl = NEWS_TEMPLATES[Math.floor(Math.random()*NEWS_TEMPLATES.length)];
+      const dir = tmpl.t==='good'?1:-1;
+      const mag = (0.03+Math.random()*0.09)*tmpl.mult;
+      stockShock[s.sym]=dir*mag;
+      pushNews(tmpl.t, tmpl.txt(s));
+    }
+  });
+
+  // Rare black-swan crash or boom (~3%)
+  if(Math.random()<0.03){
+    const crash = Math.random()<0.55;
+    const mag = 0.06+Math.random()*0.10;
+    state.marketMood += crash?-0.8:0.6;
+    state.stocks.forEach(s=> stockShock[s.sym]=(stockShock[s.sym]||0)+(crash?-mag:mag)*(0.6+Math.random()*0.8));
+    pushNews(crash?'bad':'good',
+      crash? '🚨 MARKET CRASH! Panic selling sweeps the exchange.'
+           : '🚀 MARKET BOOM! A wave of buying lifts all stocks.');
+  }
+
+  // Update each stock price
+  state.stocks.forEach(s=>{
+    s.prevClose = s.price;
+
+    let ret = s.drift;                      // baseline drift
+    ret += s.vol*gaussian();                // random volatility
+    ret += state.marketMood*0.010;          // broad market influence
+    ret += (sectorShock[s.sector]||0);      // sector shock
+    ret += (stockShock[s.sym]||0);          // individual shock
+    ret += s.momentum*0.25;                 // momentum carry-over
+
+    // update momentum (decays, follows recent returns)
+    s.momentum = s.momentum*0.6 + ret*0.4;
+    s.momentum = Math.max(-0.05, Math.min(0.05, s.momentum));
+
+    let np = s.price*(1+ret);
+    if(np < 0.5) np = 0.5; // floor — no negative prices
+    s.price = +np.toFixed(2);
+    s.history.push(s.price);
+    if(s.history.length>120) s.history.shift();
+  });
+
+  renderAll();
+  save();
+  checkMilestones();
+}
+
+function pushNews(type, text){
+  state.news.unshift({type, text, day:state.day});
+  if(state.news.length>40) state.news.pop();
+}
+
+/* ---------------- trading ---------------- */
+function buy(stock, qty){
+  qty=Math.floor(qty);
+  if(qty<=0){ toast('Enter a valid quantity.','lose'); return; }
+  const cost=stock.price*qty;
+  if(cost>state.cash){ toast('Not enough cash for that order.','lose'); return; }
+  const totalShares=stock.shares+qty;
+  stock.avgCost=(stock.avgCost*stock.shares+cost)/totalShares;
+  stock.shares=totalShares;
+  state.cash-=cost;
+  toast(`Bought ${qty} ${stock.sym} @ $${stock.price.toFixed(2)} (−$${cost.toFixed(2)})`,'win');
+  renderAll(); save();
+}
+
+function sell(stock, qty){
+  qty=Math.floor(qty);
+  if(qty<=0){ toast('Enter a valid quantity.','lose'); return; }
+  if(qty>stock.shares){ toast(`You only own ${stock.shares} ${stock.sym}.`,'lose'); return; }
+  const proceeds=stock.price*qty;
+  const realized=(stock.price-stock.avgCost)*qty;
+  stock.shares-=qty;
+  if(stock.shares===0) stock.avgCost=0;
+  state.cash+=proceeds;
+  toast(`Sold ${qty} ${stock.sym} @ $${stock.price.toFixed(2)} (P/L ${realized>=0?'+':'−'}$${Math.abs(realized).toFixed(2)})`,
+        realized>=0?'win':'lose');
+  renderAll(); save();
+}
+
+/* ---------------- derived values ---------------- */
+function holdingsValue(){ return state.stocks.reduce((a,s)=>a+s.price*s.shares,0); }
+function netWorth(){ return state.cash+holdingsValue(); }
+
+/* ---------------- rendering ---------------- */
+const $=id=>document.getElementById(id);
+function fmt(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function renderAll(){
+  renderHeader();
+  renderMarket();
+  renderPortfolio();
+  renderNews();
+  renderChart();
+  renderTradePanel();
+  $('day').textContent=state.day;
+  const mood=state.marketMood;
+  let label='Neutral',col='var(--muted)';
+  if(mood>0.3){label='Bullish 🐂';col='var(--green)';}
+  else if(mood<-0.3){label='Bearish 🐻';col='var(--red)';}
+  else if(mood>0.1){label='Optimistic';col='var(--green)';}
+  else if(mood<-0.1){label='Cautious';col='var(--red)';}
+  const sent=$('sentiment'); sent.textContent=label; sent.style.color=col;
+}
+
+function renderHeader(){
+  const hv=holdingsValue(), nw=netWorth(), pl=nw-START_CASH;
+  $('cash').textContent=fmt(state.cash);
+  $('holdval').textContent=fmt(hv);
+  $('networth').textContent=fmt(nw);
+  const t=$('totalpl');
+  t.textContent=(pl>=0?'+':'−')+'$'+Math.abs(pl).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  t.className='val '+(pl>=0?'pl-pos':'pl-neg');
+}
+
+function pctChange(s){ return (s.price-s.prevClose)/s.prevClose*100; }
+
+function sparkline(s){
+  const h=s.history.slice(-30);
+  const min=Math.min(...h),max=Math.max(...h);
+  const w=70,ht=22,range=(max-min)||1;
+  const pts=h.map((p,i)=>{
+    const x=(i/(h.length-1))*w;
+    const y=ht-((p-min)/range)*ht;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  const col=h[h.length-1]>=h[0]?'var(--green)':'var(--red)';
+  return `<svg class="spark" width="${w}" height="${ht}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
+}
+
+function renderMarket(){
+  const tb=$('marketBody'); tb.innerHTML='';
+  state.stocks.forEach((s,i)=>{
+    const pc=pctChange(s);
+    const tr=document.createElement('tr');
+    tr.className='stock-row'+(i===state.selected?' sel':'');
+    tr.onclick=()=>{state.selected=i;renderAll();};
+    tr.innerHTML=`
+      <td><div class="sym">${s.sym}</div><div class="name">${s.name}</div></td>
+      <td class="r">$${s.price.toFixed(2)}</td>
+      <td class="r ${pc>=0?'up':'down'}">${pc>=0?'+':''}${pc.toFixed(2)}%</td>
+      <td class="r">${sparkline(s)}</td>
+      <td class="r">${s.shares>0?`<span class="up">${s.shares}</span>`:'<span style="color:var(--muted)">—</span>'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function renderPortfolio(){
+  const tb=$('portBody'); tb.innerHTML='';
+  const held=state.stocks.filter(s=>s.shares>0);
+  if(held.length===0){
+    tb.innerHTML=`<tr><td colspan="5" class="empty">No positions yet. Buy a stock to start trading.</td></tr>`;
+    return;
+  }
+  held.forEach(s=>{
+    const val=s.price*s.shares;
+    const pl=(s.price-s.avgCost)*s.shares;
+    const plPct=(s.price/s.avgCost-1)*100;
+    const tr=document.createElement('tr');
+    tr.className='holdings-row';
+    tr.innerHTML=`
+      <td class="sym">${s.sym}</td>
+      <td class="r">${s.shares}</td>
+      <td class="r">$${s.avgCost.toFixed(2)}</td>
+      <td class="r">$${val.toFixed(2)}</td>
+      <td class="r ${pl>=0?'up':'down'}">${pl>=0?'+':'−'}$${Math.abs(pl).toFixed(2)}<br><span style="font-size:10px;">${pl>=0?'+':''}${plPct.toFixed(1)}%</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function renderNews(){
+  const f=$('newsFeed'); f.innerHTML='';
+  if(state.news.length===0){
+    f.innerHTML=`<div class="empty">No news yet. Advance the day to see market activity.</div>`;
+    return;
+  }
+  state.news.forEach(n=>{
+    const div=document.createElement('div');
+    div.className='news-item';
+    const cls=n.type==='good'?'good':n.type==='bad'?'bad':'neutral';
+    div.innerHTML=`<span class="tag ${cls}">${n.type==='good'?'▲ Bull':n.type==='bad'?'▼ Bear':'• Info'}</span>${n.text} <span class="time">— Day ${n.day}</span>`;
+    f.appendChild(div);
+  });
+}
+
+function renderTradePanel(){
+  const s=state.stocks[state.selected];
+  if(!s){ $('tradePanel').style.display='none'; return; }
+  $('tradePanel').style.display='flex';
+  const info=$('holdInfo');
+  const maxBuy=Math.floor(state.cash/s.price);
+  info.innerHTML = s.shares>0
+    ? `You own <strong>${s.shares}</strong> @ avg $${s.avgCost.toFixed(2)} · Max buy: ${maxBuy} shares`
+    : `Max buy with current cash: <strong>${maxBuy}</strong> shares`;
+}
+
+let chartCtx;
+function renderChart(){
+  const s=state.stocks[state.selected];
+  const canvas=$('chart');
+  if(!chartCtx){
+    chartCtx=canvas.getContext('2d');
+  }
+  // size for crispness
+  const dpr=window.devicePixelRatio||1;
+  const w=canvas.clientWidth, h=canvas.clientHeight;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  const ctx=chartCtx; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  if(!s){ return; }
+  const data=s.history;
+  $('chartSym').textContent=`${s.sym} · ${s.name}`;
+  $('chartPrice').textContent='$'+s.price.toFixed(2);
+  const pc=pctChange(s);
+  const pe=$('chartPct');
+  pe.textContent=`${pc>=0?'▲ +':'▼ '}${pc.toFixed(2)}% today`;
+  pe.className='pct '+(pc>=0?'up':'down');
+
+  const pad=30;
+  const min=Math.min(...data), max=Math.max(...data);
+  const range=(max-min)||1;
+  const xStep=(w-pad*2)/Math.max(1,(data.length-1));
+  const yOf=p=>h-pad-((p-min)/range)*(h-pad*1.4);
+
+  // grid lines
+  ctx.strokeStyle='rgba(255,255,255,0.05)';
+  ctx.lineWidth=1;
+  ctx.fillStyle='#5d6b80';
+  ctx.font='10px Segoe UI';
+  for(let i=0;i<=4;i++){
+    const yy=pad*0.5+i*((h-pad*1.4)/4);
+    ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(w-pad,yy);ctx.stroke();
+    const price=max-(i/4)*range;
+    ctx.fillText('$'+price.toFixed(2),2,yy+3);
+  }
+
+  const rising=data[data.length-1]>=data[0];
+  const lineCol=rising?'#16c784':'#ea3943';
+
+  // area fill
+  ctx.beginPath();
+  data.forEach((p,i)=>{const x=pad+i*xStep,y=yOf(p); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.lineTo(pad+(data.length-1)*xStep,h-pad);
+  ctx.lineTo(pad,h-pad);
+  ctx.closePath();
+  const grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, rising?'rgba(22,199,132,0.25)':'rgba(234,57,67,0.25)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grad; ctx.fill();
+
+  // price line
+  ctx.beginPath();
+  data.forEach((p,i)=>{const x=pad+i*xStep,y=yOf(p); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.strokeStyle=lineCol; ctx.lineWidth=2; ctx.stroke();
+
+  // avg cost line if holding
+  if(s.shares>0){
+    const y=yOf(s.avgCost);
+    if(y>pad*0.4 && y<h-pad*0.4){
+      ctx.setLineDash([4,4]);
+      ctx.strokeStyle='rgba(240,185,11,0.8)';
+      ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='var(--accent)';ctx.fillStyle='#f0b90b';
+      ctx.fillText('avg $'+s.avgCost.toFixed(2), w-pad-70, y-4);
+    }
+  }
+
+  // last dot
+  const lx=pad+(data.length-1)*xStep, ly=yOf(s.price);
+  ctx.beginPath();ctx.arc(lx,ly,3.5,0,Math.PI*2);ctx.fillStyle=lineCol;ctx.fill();
+}
+
+/* ---------------- toasts ---------------- */
+function toast(msg,type){
+  const t=document.createElement('div');
+  t.className='toast '+(type||'');
+  t.textContent=msg;
+  $('toastWrap').appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(()=>t.remove(),400);},3000);
+}
+
+/* ---------------- milestones / game feel ---------------- */
+let milestones={};
+function checkMilestones(){
+  const nw=netWorth();
+  const tiers=[2000,5000,10000,25000,50000,100000];
+  tiers.forEach(tier=>{
+    if(nw>=tier && !milestones[tier]){
+      milestones[tier]=true;
+      showModal('🎉 Milestone Reached!', fmt(nw),
+        `Your net worth crossed ${fmt(tier)}! You started with just $1,000. Keep compounding — but beware the next crash.`);
+    }
+  });
+  // bankruptcy warning
+  if(nw< START_CASH*0.3 && !milestones.broke){
+    milestones.broke=true;
+    showModal('⚠️ Heavy Losses', fmt(nw),
+      `Your portfolio has fallen below 30% of your starting capital. Markets recover — consider buying quality at a discount, or sit tight.`);
+  }
+}
+function showModal(title,figure,text){
+  $('modalTitle').textContent=title;
+  $('modalFigure').textContent=figure;
+  $('modalText').textContent=text;
+  $('modalBg').classList.add('show');
+}
+
+/* ---------------- auto-play loop ---------------- */
+let timer=null;
+function setSpeed(ms){
+  if(timer){clearInterval(timer);timer=null;}
+  if(ms>0){ timer=setInterval(advanceDay, ms); }
+}
+
+/* ---------------- event wiring ---------------- */
+function init(){
+  state=load()||freshState();
+  // recompute milestones already passed so we don't re-trigger
+  const nw=netWorth();
+  [2000,5000,10000,25000,50000,100000].forEach(t=>{ if(nw>=t) milestones[t]=true; });
+
+  renderAll();
+
+  $('nextDay').onclick=advanceDay;
+  $('resetBtn').onclick=()=>{
+    if(confirm('Reset the game and start over with $1,000?')){
+      state=freshState(); milestones={};
+      setSpeed(0);
+      document.querySelectorAll('#speedGroup button').forEach(b=>b.classList.remove('active'));
+      document.querySelector('#speedGroup button[data-speed="0"]').classList.add('active');
+      renderAll(); save();
+      toast('New game started. Good luck!','win');
+    }
+  };
+
+  document.querySelectorAll('#speedGroup button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('#speedGroup button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      setSpeed(parseInt(b.dataset.speed));
+    };
+  });
+
+  $('buyBtn').onclick=()=>buy(state.stocks[state.selected], parseInt($('qty').value)||0);
+  $('sellBtn').onclick=()=>sell(state.stocks[state.selected], parseInt($('qty').value)||0);
+
+  document.querySelectorAll('.qbtns button').forEach(b=>{
+    b.onclick=()=>{
+      const s=state.stocks[state.selected];
+      if(b.dataset.q==='max'){
+        $('qty').value=Math.floor(state.cash/s.price)||1;
+      }else{
+        $('qty').value=b.dataset.q;
+      }
+    };
+  });
+
+  window.addEventListener('resize',renderChart);
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
