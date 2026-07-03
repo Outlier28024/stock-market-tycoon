@@ -532,19 +532,41 @@ function load(){
   }catch(e){}
   return null;
 }
-// Backfill fields for saves made by older versions.
+// Rebuild a saved game against the CURRENT stock universe. Any old/partial/renamed
+// save is reconciled so the market always has exactly the current listed stocks,
+// carrying over holdings, prices and history whenever the symbol still exists.
 function migrate(s){
-  s.stocks.forEach(st=>{
-    const def=STOCK_DEFS.find(d=>d.sym===st.sym)||{};
-    ['sharesOut','eps','div','beta','vol','drift','sector','name'].forEach(k=>{ if(st[k]===undefined) st[k]=def[k]; });
-    if(st.open===undefined)    st.open=st.prevClose;
-    if(st.dayHigh===undefined) st.dayHigh=Math.max(st.prevClose,st.price);
-    if(st.dayLow===undefined)  st.dayLow=Math.min(st.prevClose,st.price);
-    if(st.volume===undefined)  st.volume=(def.sharesOut||300)*1e6*0.004;
+  const num=(v,d)=> (typeof v==='number' && isFinite(v)) ? v : d;
+  const bySym={};
+  if(Array.isArray(s.stocks)) s.stocks.forEach(st=>{ if(st && st.sym) bySym[st.sym]=st; });
+
+  s.stocks = STOCK_DEFS.map(d=>{
+    const o = bySym[d.sym] || {};
+    const price = num(o.price, d.price);
+    const hist = (Array.isArray(o.history) && o.history.length) ? o.history.slice(-140) : [price];
+    return {
+      ...d,
+      price,
+      prevClose: num(o.prevClose, price),
+      open:      num(o.open, price),
+      dayHigh:   num(o.dayHigh, price),
+      dayLow:    num(o.dayLow, price),
+      volume:    num(o.volume, d.sharesOut*1e6*0.004),
+      history:   hist,
+      momentum:  num(o.momentum, 0),
+      shares:    Math.max(0, Math.floor(num(o.shares, 0))),
+      avgCost:   num(o.avgCost, 0),
+    };
   });
+
+  if(typeof s.cash!=='number' || !isFinite(s.cash)) s.cash=START_CASH;
+  if(typeof s.day!=='number'  || !isFinite(s.day))  s.day=1;
+  if(typeof s.marketMood!=='number' || !isFinite(s.marketMood)) s.marketMood=0;
+  if(typeof s.selected!=='number' || s.selected<0 || s.selected>=s.stocks.length) s.selected=0;
+  if(!Array.isArray(s.news))   s.news=[];
   if(!Array.isArray(s.trades)) s.trades=[];
-  if(!Array.isArray(s.equityCurve))
-    s.equityCurve=[{day:s.day||1, nw:(s.cash||0)+s.stocks.reduce((a,x)=>a+x.price*(x.shares||0),0)}];
+  if(!Array.isArray(s.equityCurve) || !s.equityCurve.length)
+    s.equityCurve=[{day:s.day, nw:s.cash+s.stocks.reduce((a,x)=>a+x.price*x.shares,0)}];
   return s;
 }
 
@@ -1384,12 +1406,25 @@ function init(){
   const accts=getAccounts();
   if(savedUser && accts[savedUser]) currentUser=savedUser;
 
-  state=load()||freshState();
+  // Load the saved game defensively — a corrupt/old save must never break the page.
+  try{
+    state=load()||freshState();
+  }catch(err){
+    console.error('Save load failed, starting fresh:', err);
+    try{ localStorage.removeItem(saveKey()); }catch(e){}
+    state=freshState();
+  }
   const nw=netWorth();
   [2000,5000,10000,25000,50000,100000].forEach(t=>{ if(nw>=t) milestones[t]=true; });
 
   renderAccount();
-  renderAll();
+  try{
+    renderAll();
+  }catch(err){
+    console.error('Render failed, resetting game state:', err);
+    state=freshState(); currentView='markets';
+    renderAll();
+  }
   recordBest();
 
   document.querySelectorAll('#tabs button').forEach(b=>{
