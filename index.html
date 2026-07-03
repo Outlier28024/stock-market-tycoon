@@ -44,7 +44,7 @@
   .stats{display:flex;gap:10px;flex-wrap:wrap;}
   .stat{
     background:var(--panel);border:1px solid var(--border);border-radius:10px;
-    padding:9px 16px;min-width:120px;
+    padding:9px 16px;min-width:118px;
   }
   .stat .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
   .stat .val{font-size:19px;font-weight:700;margin-top:2px;}
@@ -64,9 +64,16 @@
     background:var(--panel);border:1px solid var(--border);border-radius:20px;
     padding:8px 16px;font-weight:700;
   }
-  .speed-group{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:3px;}
+  .tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px;}
+  .tabs button{background:transparent;color:var(--muted);padding:8px 16px;}
+  .tabs button.active{background:var(--accent);color:#1a1205;}
+  .speed-group{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:3px;align-items:center;}
+  .speed-group .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 6px;}
   .speed-group button{padding:6px 12px;background:transparent;color:var(--muted);font-size:12px;}
   .speed-group button.active{background:var(--accent);color:#1a1205;}
+
+  .view{display:none;}
+  .view.active{display:block;}
 
   .grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;}
   @media(max-width:960px){.grid{grid-template-columns:1fr;}}
@@ -92,11 +99,17 @@
   .up{color:var(--green);}
   .down{color:var(--red);}
   .spark{display:block;}
+  .mutecell{color:var(--muted);}
 
   .chart-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
   .chart-head .big{font-size:26px;font-weight:800;}
   .chart-head .pct{font-size:15px;font-weight:700;}
   #chart{width:100%;height:230px;background:var(--panel2);border-radius:10px;}
+
+  .quote-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:14px;}
+  .quote-stats .qs{background:var(--panel2);padding:9px 11px;}
+  .quote-stats .qs .k{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .quote-stats .qs .v{font-size:13.5px;font-weight:700;margin-top:2px;}
 
   .trade{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;}
   .trade input{
@@ -105,12 +118,14 @@
   }
   .qbtns{display:flex;gap:5px;}
   .qbtns button{padding:6px 10px;background:var(--panel2);color:var(--muted);border:1px solid var(--border);font-size:11px;}
-  .hold-info{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7;}
+  .hold-info{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7;flex-basis:100%;}
 
-  .news-feed{max-height:380px;overflow-y:auto;padding-right:4px;}
+  .news-feed{max-height:440px;overflow-y:auto;padding-right:4px;}
   .news-item{
-    padding:11px 0;border-bottom:1px solid var(--panel2);font-size:13px;line-height:1.45;
+    padding:11px 8px 11px 10px;border-bottom:1px solid var(--panel2);font-size:13px;line-height:1.45;
+    cursor:pointer;border-radius:8px;transition:.12s;
   }
+  .news-item:hover{background:#16202f;}
   .news-top{display:flex;align-items:flex-start;gap:8px;}
   .news-head{font-weight:600;}
   .news-detail{color:var(--muted);font-size:11.5px;margin-top:4px;line-height:1.45;}
@@ -124,9 +139,20 @@
   .move-chip.up{background:rgba(22,199,132,.15);color:var(--green);}
   .move-chip.down{background:rgba(234,57,67,.15);color:var(--red);}
   .news-item .time{font-size:10px;color:var(--muted);}
+  .read-more{font-size:10px;color:var(--accent);font-weight:700;margin-left:auto;}
 
   .holdings-row td{font-size:13px;}
   .empty{color:var(--muted);font-style:italic;padding:14px 6px;font-size:13px;}
+
+  /* History view */
+  .hist-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+  .hist-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+  .hist-card .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .hist-card .v{font-size:22px;font-weight:800;margin-top:4px;}
+  #equityChart{width:100%;height:270px;background:var(--panel2);border-radius:10px;}
+  .trade-log{max-height:360px;overflow-y:auto;}
+  .side-buy{color:var(--green);font-weight:700;}
+  .side-sell{color:var(--red);font-weight:700;}
 
   .toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:50;}
   .toast{
@@ -140,7 +166,7 @@
   .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:18px;line-height:1.6;}
   .pl-pos{color:var(--green);}.pl-neg{color:var(--red);}
 
-  /* Modal */
+  /* Milestone modal */
   .modal-bg{
     position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;
     align-items:center;justify-content:center;z-index:100;padding:20px;
@@ -153,6 +179,32 @@
   .modal h2{font-size:24px;margin-bottom:10px;color:var(--accent);}
   .modal p{color:var(--muted);line-height:1.6;margin-bottom:18px;}
   .modal .figure{font-size:34px;font-weight:800;margin:10px 0;}
+
+  /* News article overlay */
+  .article-bg{
+    position:fixed;inset:0;background:rgba(3,6,12,.82);display:none;
+    align-items:flex-start;justify-content:center;z-index:120;padding:40px 20px;overflow-y:auto;
+  }
+  .article-bg.show{display:flex;}
+  .article{
+    background:var(--panel);border:1px solid var(--border);border-radius:16px;
+    max-width:680px;width:100%;padding:34px;position:relative;animation:pop .25s ease;
+  }
+  @keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .article-close{
+    position:absolute;top:16px;right:16px;background:var(--panel2);color:var(--muted);
+    border:1px solid var(--border);border-radius:8px;width:34px;height:34px;padding:0;font-size:15px;
+  }
+  .article-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:6px;margin-bottom:14px;}
+  .article-title{font-size:25px;line-height:1.28;font-weight:800;margin-bottom:10px;padding-right:30px;}
+  .article-byline{font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:16px;letter-spacing:.3px;}
+  .article-reaction{margin-bottom:16px;}
+  .article-body p{font-size:14.5px;line-height:1.72;color:#cdd6e2;margin-bottom:14px;}
+  .article-body p:first-child{font-size:16px;color:var(--text);font-weight:500;}
+  .article-stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:6px 0 20px;}
+  .article-stat .cell{background:var(--panel2);padding:10px 12px;}
+  .article-stat .cell .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .article-stat .cell .v{font-size:15px;font-weight:700;margin-top:3px;}
 </style>
 </head>
 <body>
@@ -174,75 +226,104 @@
   </header>
 
   <div class="controls">
+    <div class="tabs" id="tabs">
+      <button data-view="markets" class="active">📊 Markets</button>
+      <button data-view="history">📒 History</button>
+    </div>
     <div class="day-pill">📅 Day <span id="day">1</span></div>
-    <button class="btn-primary" id="nextDay">Advance Day ▶</button>
     <div class="speed-group" id="speedGroup">
-      <button data-speed="0" class="active">Paused</button>
-      <button data-speed="2000">1×</button>
+      <span class="lbl">Speed</span>
+      <button data-speed="2000" class="active">1×</button>
       <button data-speed="1000">2×</button>
       <button data-speed="400">5×</button>
     </div>
-    <button class="btn-ghost" id="resetBtn">↺ Reset Game</button>
+    <button class="btn-ghost" id="resetBtn">↺ Reset</button>
     <span style="color:var(--muted);font-size:12px;margin-left:auto;">Market sentiment: <strong id="sentiment">Neutral</strong></span>
   </div>
 
-  <div class="grid">
-    <div>
-      <div class="card" style="margin-bottom:16px;">
-        <div class="chart-head">
-          <div>
-            <div id="chartSym" style="font-size:13px;color:var(--muted);letter-spacing:1px;">SELECT A STOCK</div>
-            <div class="big" id="chartPrice">—</div>
+  <!-- ===================== MARKETS VIEW ===================== -->
+  <div class="view active" id="view-markets">
+    <div class="grid">
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="chart-head">
+            <div>
+              <div id="chartSym" style="font-size:13px;color:var(--muted);letter-spacing:1px;">SELECT A STOCK</div>
+              <div class="big" id="chartPrice">—</div>
+            </div>
+            <div class="pct" id="chartPct"></div>
           </div>
-          <div class="pct" id="chartPct"></div>
+          <canvas id="chart"></canvas>
+          <div class="quote-stats" id="quoteStats"></div>
+          <div class="trade" id="tradePanel" style="display:none;">
+            <div class="qbtns">
+              <button data-q="1">1</button>
+              <button data-q="5">5</button>
+              <button data-q="10">10</button>
+              <button data-q="max">MAX</button>
+            </div>
+            <input type="number" id="qty" min="1" value="1">
+            <button class="btn-primary" id="buyBtn">Buy</button>
+            <button class="btn-danger" id="sellBtn">Sell</button>
+            <div class="hold-info" id="holdInfo"></div>
+          </div>
         </div>
-        <canvas id="chart"></canvas>
-        <div class="trade" id="tradePanel" style="display:none;">
-          <div class="qbtns">
-            <button data-q="1">1</button>
-            <button data-q="5">5</button>
-            <button data-q="10">10</button>
-            <button data-q="max">MAX</button>
+
+        <div class="card">
+          <h2>Market — Click a stock to trade</h2>
+          <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>Symbol</th><th class="r">Price</th><th class="r">Day %</th><th class="r">P/E</th><th class="r">Mkt Cap</th><th class="r">Trend</th><th class="r">Owned</th></tr>
+            </thead>
+            <tbody id="marketBody"></tbody>
+          </table>
           </div>
-          <input type="number" id="qty" min="1" value="1">
-          <button class="btn-primary" id="buyBtn">Buy</button>
-          <button class="btn-danger" id="sellBtn">Sell</button>
-          <div class="hold-info" id="holdInfo"></div>
         </div>
       </div>
 
-      <div class="card">
-        <h2>Market — Click a stock to trade</h2>
-        <table>
-          <thead>
-            <tr><th>Symbol</th><th class="r">Price</th><th class="r">Day %</th><th class="r">Trend</th><th class="r">Owned</th></tr>
-          </thead>
-          <tbody id="marketBody"></tbody>
-        </table>
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <h2>Your Portfolio</h2>
+          <table>
+            <thead>
+              <tr><th>Sym</th><th class="r">Shares</th><th class="r">Avg Cost</th><th class="r">Value</th><th class="r">P/L</th></tr>
+            </thead>
+            <tbody id="portBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>📰 Market News — click a story for full analysis</h2>
+          <div class="news-feed" id="newsFeed"></div>
+        </div>
       </div>
     </div>
+  </div>
 
-    <div>
-      <div class="card" style="margin-bottom:16px;">
-        <h2>Your Portfolio</h2>
+  <!-- ===================== HISTORY VIEW ===================== -->
+  <div class="view" id="view-history">
+    <div class="hist-summary" id="histSummary"></div>
+    <div class="card" style="margin-bottom:16px;">
+      <h2>Net Worth Over Time</h2>
+      <canvas id="equityChart"></canvas>
+    </div>
+    <div class="card">
+      <h2>Trade History — realized gains &amp; losses</h2>
+      <div class="trade-log">
         <table>
           <thead>
-            <tr><th>Sym</th><th class="r">Shares</th><th class="r">Avg Cost</th><th class="r">Value</th><th class="r">P/L</th></tr>
+            <tr><th>Day</th><th>Side</th><th>Sym</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Value</th><th class="r">Realized P/L</th></tr>
           </thead>
-          <tbody id="portBody"></tbody>
+          <tbody id="tradeLogBody"></tbody>
         </table>
-      </div>
-
-      <div class="card">
-        <h2>📰 Market News</h2>
-        <div class="news-feed" id="newsFeed"></div>
       </div>
     </div>
   </div>
 
   <div class="footer-note">
-    This is a simulated market for entertainment & education — prices follow a geometric random walk with volatility, momentum, sector correlation, and random news shocks.<br>
-    Not financial advice. Goal: grow your $1,000 as large as you can. Markets can crash. Diversify, time your entries, and watch the news.
+    Simulated market for entertainment &amp; education — prices follow a geometric random walk with volatility, momentum, sector correlation, valuation, beta and random news shocks.<br>
+    Not financial advice. Goal: grow your $1,000 as large as you can. Time runs automatically — pick a speed, watch the news, and manage your risk.
   </div>
 </div>
 
@@ -253,7 +334,20 @@
     <h2 id="modalTitle">Game Over</h2>
     <div class="figure" id="modalFigure"></div>
     <p id="modalText"></p>
-    <button class="btn-primary" onclick="document.getElementById('modalBg').classList.remove('show')">Continue Playing</button>
+    <button class="btn-primary" id="modalClose">Continue Playing</button>
+  </div>
+</div>
+
+<div class="article-bg" id="articleBg">
+  <div class="article">
+    <button class="article-close" id="articleClose">✕</button>
+    <span class="article-tag" id="artTag"></span>
+    <h1 class="article-title" id="artTitle"></h1>
+    <div class="article-byline" id="artByline"></div>
+    <div class="article-reaction" id="artReaction"></div>
+    <div class="article-body" id="artBody"></div>
+    <div class="article-stat" id="artStat" style="display:none;"></div>
+    <div id="artActions"></div>
   </div>
 </div>
 
@@ -264,27 +358,29 @@
 
 const START_CASH = 1000;
 
-// Stock definitions. Each has a sector, baseline volatility & drift.
+// Stock universe with fundamentals.
+//  sharesOut = shares outstanding (millions), eps = trailing earnings/share,
+//  div = annual dividend/share, beta = sensitivity to the broad market.
 const STOCK_DEFS = [
-  {sym:'NOVA', name:'Nova Robotics',     sector:'Tech',    price:42.0,  vol:0.035, drift:0.0006},
-  {sym:'BYTE', name:'ByteForge Cloud',   sector:'Tech',    price:128.5, vol:0.030, drift:0.0007},
-  {sym:'HELX', name:'Helix Biotech',     sector:'Health',  price:18.7,  vol:0.055, drift:0.0009},
-  {sym:'MEDI', name:'MediCore Labs',     sector:'Health',  price:74.3,  vol:0.028, drift:0.0004},
-  {sym:'PETRO',name:'Petrol Global',     sector:'Energy',  price:56.1,  vol:0.026, drift:0.0002},
-  {sym:'SOLR', name:'SolarWave Energy',  sector:'Energy',  price:23.4,  vol:0.045, drift:0.0008},
-  {sym:'GOLD', name:'Auric Mining Co.',  sector:'Mining',  price:91.0,  vol:0.022, drift:0.0001},
-  {sym:'BANC', name:'First Capital Bank',sector:'Finance', price:64.8,  vol:0.020, drift:0.0003},
-  {sym:'SHOP', name:'MegaMart Retail',   sector:'Retail',  price:33.9,  vol:0.024, drift:0.0003},
-  {sym:'AERO', name:'AeroSpace Dynamics',sector:'Industry',price:112.0, vol:0.032, drift:0.0005},
+  {sym:'NOVA', name:'Nova Robotics',      sector:'Tech',     price:42.0,  vol:0.035, drift:0.0006, sharesOut:480, eps:1.05, div:0.00, beta:1.60},
+  {sym:'BYTE', name:'ByteForge Cloud',    sector:'Tech',     price:128.5, vol:0.030, drift:0.0007, sharesOut:610, eps:4.15, div:0.60, beta:1.35},
+  {sym:'HELX', name:'Helix Biotech',      sector:'Health',   price:18.7,  vol:0.055, drift:0.0009, sharesOut:210, eps:0.32, div:0.00, beta:1.80},
+  {sym:'MEDI', name:'MediCore Labs',      sector:'Health',   price:74.3,  vol:0.028, drift:0.0004, sharesOut:350, eps:4.60, div:1.80, beta:0.85},
+  {sym:'PETRO',name:'Petrol Global',      sector:'Energy',   price:56.1,  vol:0.026, drift:0.0002, sharesOut:900, eps:6.30, div:3.40, beta:1.10},
+  {sym:'SOLR', name:'SolarWave Energy',   sector:'Energy',   price:23.4,  vol:0.045, drift:0.0008, sharesOut:260, eps:0.65, div:0.00, beta:1.55},
+  {sym:'GOLD', name:'Auric Mining Co.',   sector:'Mining',   price:91.0,  vol:0.022, drift:0.0001, sharesOut:300, eps:5.20, div:1.10, beta:0.70},
+  {sym:'BANC', name:'First Capital Bank', sector:'Finance',  price:64.8,  vol:0.020, drift:0.0003, sharesOut:540, eps:7.10, div:2.60, beta:1.05},
+  {sym:'SHOP', name:'MegaMart Retail',    sector:'Retail',   price:33.9,  vol:0.024, drift:0.0003, sharesOut:700, eps:2.35, div:0.90, beta:0.95},
+  {sym:'AERO', name:'AeroSpace Dynamics', sector:'Industry', price:112.0, vol:0.032, drift:0.0005, sharesOut:260, eps:6.80, div:2.20, beta:1.20},
 ];
 
-/* news helpers */
+/* helpers */
 const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
 const pctTxt = p => (p>=0?'+':'')+p.toFixed(2)+'%';
 const ANALYSTS = ['Goldman Stanley','Morgan Sachs','J.P. Halloran','Citibridge','Barcourt Capital',
   'Evercore Peak','Wedwood Securities','Lazlo & Co.','Northpoint Research'];
 
-// Individual-stock news: a headline plus a supporting detail line.
+// Individual-stock news: headline + supporting detail line.
 const NEWS_TEMPLATES = [
   // ---- bullish ----
   {t:'good', mult:1.2, head:s=>`${s.name} (${s.sym}) tops quarterly earnings estimates`,
@@ -318,7 +414,7 @@ const NEWS_TEMPLATES = [
     detail:s=>`Potential legal liabilities cloud the outlook and weigh on sentiment.`},
 ];
 
-// Sector-wide news affecting every stock in the sector.
+// Sector-wide news.
 const SECTOR_NEWS = [
   {t:'good', sector:'Tech',     head:'Tech rally as AI optimism sweeps the market', detail:'Investors rotate into growth names, lifting the entire sector.'},
   {t:'bad',  sector:'Tech',     head:'Tech selloff as interest-rate fears resurface', detail:'Higher-for-longer rate talk pressures richly valued shares.'},
@@ -346,12 +442,18 @@ function freshState(){
       ...d,
       price:d.price,
       prevClose:d.price,
+      open:d.price,
+      dayHigh:d.price,
+      dayLow:d.price,
+      volume:d.sharesOut*1e6*0.004,
       history:[d.price],
       momentum:0,
       shares:0,
       avgCost:0,
     })),
     news:[],
+    trades:[],
+    equityCurve:[{day:1, nw:START_CASH}],
     selected:0,
     marketMood:0, // -1..1 broad market sentiment
   };
@@ -364,9 +466,60 @@ function save(){
 function load(){
   try{
     const raw=localStorage.getItem('wst_save');
-    if(raw){ const s=JSON.parse(raw); if(s&&s.stocks) return s; }
+    if(raw){ const s=JSON.parse(raw); if(s&&s.stocks) return migrate(s); }
   }catch(e){}
   return null;
+}
+// Backfill fields for saves made by older versions.
+function migrate(s){
+  s.stocks.forEach(st=>{
+    const def=STOCK_DEFS.find(d=>d.sym===st.sym)||{};
+    ['sharesOut','eps','div','beta','vol','drift','sector','name'].forEach(k=>{ if(st[k]===undefined) st[k]=def[k]; });
+    if(st.open===undefined)    st.open=st.prevClose;
+    if(st.dayHigh===undefined) st.dayHigh=Math.max(st.prevClose,st.price);
+    if(st.dayLow===undefined)  st.dayLow=Math.min(st.prevClose,st.price);
+    if(st.volume===undefined)  st.volume=(def.sharesOut||300)*1e6*0.004;
+  });
+  if(!Array.isArray(s.trades)) s.trades=[];
+  if(!Array.isArray(s.equityCurve))
+    s.equityCurve=[{day:s.day||1, nw:(s.cash||0)+s.stocks.reduce((a,x)=>a+x.price*(x.shares||0),0)}];
+  return s;
+}
+
+/* ---------------- number formatting ---------------- */
+const $=id=>document.getElementById(id);
+function fmt(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtCap(m){ // m = market cap in millions of $
+  if(m>=1e6) return '$'+(m/1e6).toFixed(2)+'T';
+  if(m>=1000) return '$'+(m/1000).toFixed(2)+'B';
+  return '$'+m.toFixed(0)+'M';
+}
+function fmtVol(v){ // v = share count
+  if(v>=1e9) return (v/1e9).toFixed(2)+'B';
+  if(v>=1e6) return (v/1e6).toFixed(2)+'M';
+  if(v>=1e3) return (v/1e3).toFixed(1)+'K';
+  return v.toFixed(0);
+}
+function signed(n){ return (n>=0?'+':'−')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+/* ---------------- derived values ---------------- */
+function holdingsValue(){ return state.stocks.reduce((a,s)=>a+s.price*s.shares,0); }
+function netWorth(){ return state.cash+holdingsValue(); }
+function pctChange(s){ return (s.price-s.prevClose)/s.prevClose*100; }
+function peOf(s){ return s.eps>0 ? s.price/s.eps : NaN; }
+function capOf(s){ return s.price*s.sharesOut; } // millions
+function yieldOf(s){ return s.div>0 ? s.div/s.price*100 : 0; }
+function sectorPE(sector){
+  const peers=state.stocks.filter(x=>x.sector===sector && x.eps>0);
+  return peers.reduce((a,x)=>a+x.price/x.eps,0)/peers.length;
+}
+function sentimentInfo(){
+  const m=state.marketMood;
+  if(m>0.3) return {label:'Bullish 🐂',col:'var(--green)'};
+  if(m<-0.3) return {label:'Bearish 🐻',col:'var(--red)'};
+  if(m>0.1) return {label:'Optimistic',col:'var(--green)'};
+  if(m<-0.1) return {label:'Cautious',col:'var(--red)'};
+  return {label:'Neutral',col:'var(--muted)'};
 }
 
 /* ---------------- simulation ---------------- */
@@ -384,9 +537,9 @@ function advanceDay(){
   state.marketMood += gaussian()*0.15 - state.marketMood*0.1;
   state.marketMood = Math.max(-1, Math.min(1, state.marketMood));
 
-  const sectorShock = {};   // sector -> return shock this day
-  const stockShock  = {};   // symbol -> return shock this day
-  const pending     = [];   // driver-news items created before prices move
+  const sectorShock = {};
+  const stockShock  = {};
+  const pending     = [];   // driver-news created before prices move
 
   // Sector-wide news (~32% of days)
   if(Math.random()<0.32){
@@ -396,7 +549,7 @@ function advanceDay(){
     pending.push({type:n.t, head:n.head, detail:n.detail, sector:n.sector, day:state.day, change:null});
   }
 
-  // Per-stock individual news (~10% chance each)
+  // Per-stock news (~10% each)
   state.stocks.forEach(s=>{
     if(Math.random()<0.10){
       const tmpl = rnd(NEWS_TEMPLATES);
@@ -413,52 +566,59 @@ function advanceDay(){
     const mag = 0.06+Math.random()*0.10;
     state.marketMood += crash?-0.8:0.6;
     state.stocks.forEach(s=> stockShock[s.sym]=(stockShock[s.sym]||0)+(crash?-mag:mag)*(0.6+Math.random()*0.8));
-    pending.push({type:crash?'bad':'good', market:true, day:state.day, change:null,
+    pending.push({type:crash?'bad':'good', market:true, swan:true, day:state.day, change:null,
       head: crash?'🚨 MARKET CRASH! Panic selling sweeps the exchange'
                  :'🚀 MARKET MELT-UP! A wave of buying lifts nearly every stock',
       detail: crash?'Fear grips traders as sell orders cascade across all sectors at once.'
                    :'Euphoria takes hold as buyers chase almost every name sharply higher.'});
   }
 
-  // ---- Update each stock price ----
+  // ---- Update each stock: price, OHLC, volume ----
   state.stocks.forEach(s=>{
     s.prevClose = s.price;
 
-    let ret = s.drift;                      // baseline drift
-    ret += s.vol*gaussian();                // random volatility
-    ret += state.marketMood*0.010;          // broad market influence
-    ret += (sectorShock[s.sector]||0);      // sector shock
-    ret += (stockShock[s.sym]||0);          // individual shock
-    ret += s.momentum*0.25;                 // momentum carry-over
+    let ret = s.drift;                            // baseline drift
+    ret += s.vol*gaussian();                      // idiosyncratic volatility
+    ret += state.marketMood*0.010*s.beta;         // market beta influence
+    ret += (sectorShock[s.sector]||0);            // sector shock
+    ret += (stockShock[s.sym]||0);                // individual shock
+    ret += s.momentum*0.25;                       // momentum carry-over
 
-    // update momentum (decays, follows recent returns)
     s.momentum = s.momentum*0.6 + ret*0.4;
     s.momentum = Math.max(-0.05, Math.min(0.05, s.momentum));
 
+    const openP = s.prevClose*(1+gaussian()*0.003);  // small overnight gap
     let np = s.price*(1+ret);
-    if(np < 0.5) np = 0.5; // floor — no negative prices
+    if(np < 0.5) np = 0.5;
     s.price = +np.toFixed(2);
+    s.open  = +Math.max(0.5,openP).toFixed(2);
+    s.dayHigh = +(Math.max(s.open,s.price)*(1+Math.random()*0.010)).toFixed(2);
+    s.dayLow  = +(Math.min(s.open,s.price)*(1-Math.random()*0.010)).toFixed(2);
+    s.volume  = Math.round(s.sharesOut*1e6*(0.002+Math.random()*0.006)*(1+Math.abs(ret)*8));
     s.history.push(s.price);
-    if(s.history.length>120) s.history.shift();
+    if(s.history.length>140) s.history.shift();
   });
 
-  // ---- Second pass: make the news reflect what actually happened ----
+  // ---- Second pass: make news reflect what actually happened ----
   const changes = state.stocks.map(s=>({s, pc:pctChange(s)}));
   const explained = new Set();
 
-  // Attach each driver headline's realized move so the words match the chart
   pending.forEach(item=>{
     if(item.sym){
-      item.change = pctChange(state.stocks.find(x=>x.sym===item.sym));
+      const st=state.stocks.find(x=>x.sym===item.sym);
+      item.change=pctChange(st);
+      item.volTxt=fmtVol(st.volume)+' shares';
+      item.article=buildStockArticle(st,item);
       explained.add(item.sym);
     }else if(item.sector){
-      const grp = changes.filter(c=>c.s.sector===item.sector);
-      item.change = grp.reduce((a,c)=>a+c.pc,0)/grp.length;
+      const grp=changes.filter(c=>c.s.sector===item.sector);
+      item.change=grp.reduce((a,c)=>a+c.pc,0)/grp.length;
+      item.article=buildSectorArticle(item,changes);
     }else if(item.market){
-      item.change = changes.reduce((a,c)=>a+c.pc,0)/changes.length;
+      item.change=changes.reduce((a,c)=>a+c.pc,0)/changes.length;
+      item.article=buildSwanArticle(item,changes);
     }
   });
-  // Push driver news (oldest first so they sit just under the daily wrap)
   pending.forEach(it=> state.news.unshift(it));
 
   // Reactive explainer: a big move with no headline behind it still gets reported
@@ -469,37 +629,96 @@ function advanceDay(){
                    'short sellers scramble to cover positions','retail buyers chase the rally','unusually heavy call-option buying'];
     const dnWhy = ['traders lock in profits after a strong run','risk-off selling sweeps the name',
                    'momentum funds head for the exits','stop-loss orders trigger a cascade','heavy put-option activity'];
-    state.news.unshift({type:up?'good':'bad', sym:m.s.sym, day:state.day, change:m.pc,
+    const item={type:up?'good':'bad', sym:m.s.sym, day:state.day, change:m.pc,
+      volTxt:fmtVol(m.s.volume)+' shares',
       head:`${m.s.name} (${m.s.sym}) ${up?'jumps':'tumbles'} ${pctTxt(m.pc)} on heavy volume`,
-      detail:`No fresh company headlines — ${rnd(up?upWhy:dnWhy)}.`});
+      detail:`No fresh company headlines — ${rnd(up?upWhy:dnWhy)}.`};
+    item.article=buildStockArticle(m.s,item);
+    state.news.unshift(item);
   }
 
   // ---- Daily Market Wrap: always reflects the real session ----
   generateMarketWrap(changes);
 
-  while(state.news.length>60) state.news.pop();
+  while(state.news.length>80) state.news.pop();
+
+  // ---- Record the equity curve ----
+  state.equityCurve.push({day:state.day, nw:netWorth()});
+  if(state.equityCurve.length>600) state.equityCurve.shift();
 
   renderAll();
   save();
   checkMilestones();
 }
 
-// Builds a summary headline from the day's actual price action.
+/* ---------------- article writers (professional finance color) ---------------- */
+function buildStockArticle(s, item){
+  const pe=peOf(s), cap=capOf(s), secPE=sectorPE(s.sector), dy=yieldOf(s);
+  const good=item.type==='good';
+  const analyst=rnd(ANALYSTS);
+  const tgt = good ? s.price*(1+(0.08+Math.random()*0.12)) : s.price*(1-(0.08+Math.random()*0.12));
+  const rating = good ? rnd(['Buy','Overweight','Outperform','Accumulate']) : rnd(['Sell','Underweight','Underperform','Reduce']);
+  const chg=item.change;
+  const peTxt = isNaN(pe) ? 'a not-meaningful P/E (the company is unprofitable)'
+                          : `a trailing P/E of ${pe.toFixed(1)}× on EPS of $${s.eps.toFixed(2)} — ${pe>secPE?'a premium to':'a discount to'} the ${s.sector.toLowerCase()} peer average of ${secPE.toFixed(1)}×`;
+  const body=[
+    item.detail,
+    `At $${s.price.toFixed(2)}, ${s.sym} trades at ${peTxt}. Market capitalization stands at roughly ${fmtCap(cap)}, placing it among the ${cap>40000?'large-cap':cap>10000?'mid-cap':'small-cap'} names on the exchange.`,
+    `Shares ${chg>=0?'rose':'fell'} ${pctTxt(chg)} on the session${item.volTxt?` on volume of ${item.volTxt}`:''}. With a beta of ${s.beta.toFixed(2)}, ${s.sym} tends to swing ${s.beta>1?'more':'less'} than the broad market, so position sizing and stop levels matter more here than for a low-beta holding.`,
+    `${analyst} rates the shares ${rating}, with a 12-month price target of $${tgt.toFixed(2)} (${pctTxt((tgt/s.price-1)*100)} versus the current quote).` +
+      (dy>0 ? ` The stock yields ${dy.toFixed(2)}% in dividends, offering some income cushion if the price stalls.`
+            : ` The company pays no dividend, so total return depends entirely on capital appreciation.`),
+    good ? `Bottom line: momentum and the news flow are aligned to the upside, but chasing an extended move is how gains turn into round-trips. Disciplined buyers often wait for a pullback toward support before adding.`
+         : `Bottom line: the headline pressures sentiment, yet forced selling can create opportunity in quality names. Weigh the valuation reset against the durability of the underlying business before acting.`
+  ];
+  return {
+    body,
+    byline:`WST Newswire · Equity Desk · Day ${item.day}`,
+    stat:{ price:s.price, pe, cap, eps:s.eps, dy, beta:s.beta, sector:s.sector, target:tgt, rating }
+  };
+}
+
+function buildSectorArticle(item, changes){
+  const peers=changes.filter(c=>c.s.sector===item.sector);
+  const avg=peers.reduce((a,c)=>a+c.pc,0)/peers.length;
+  const list=peers.map(c=>`${c.s.sym} ${pctTxt(c.pc)}`).join(', ');
+  const body=[
+    item.detail,
+    `The move rippled across the ${item.sector.toLowerCase()} sector, which ${avg>=0?'gained':'lost'} an average of ${pctTxt(avg)} on the day. Constituent performance: ${list}.`,
+    `Sector rotation like this is a core driver of returns. Capital flows toward groups with improving macro tailwinds and away from those facing headwinds, and correlated names tend to move together — which is exactly why diversifying across sectors, not just across individual stocks, is what genuinely reduces portfolio risk.`,
+    avg>=0 ? `For short-term traders, sector strength can lift even mediocre companies; for longer-term investors, it's a reminder to separate a real fundamental shift from a fleeting swing in sentiment.`
+           : `For short-term traders, sector weakness can drag down even strong companies; patient investors sometimes use these dislocations to accumulate the highest-quality names at a discount.`
+  ];
+  return {body, byline:`WST Newswire · Sector Watch · Day ${item.day}`, stat:null};
+}
+
+function buildSwanArticle(item, changes){
+  const avg=changes.reduce((a,c)=>a+c.pc,0)/changes.length;
+  const crash=item.type==='bad';
+  const body=[
+    item.detail,
+    `The tape moved ${pctTxt(avg)} on average across all ten listed names. Days like this are when correlations converge toward 1 — almost everything moves together, and the diversification that normally cushions a portfolio offers far less protection than usual.`,
+    crash ? `Sharp drawdowns test discipline. Leverage and tight stops can force sellers out at the worst possible moment, while investors with dry powder and a long horizon have historically been rewarded for stepping in when others panic.`
+          : `Melt-ups feel great but can mark exhaustion. Chasing a vertical move ties up capital at rich prices; sizing positions sensibly and taking some profit into strength keeps you in control when the euphoria fades.`,
+    `Sentiment now reads ${sentimentInfo().label}. Whatever the tape does next, the durable edge in markets is risk management — deciding in advance how much you are willing to lose on any single position.`
+  ];
+  return {body, byline:`WST Newswire · Breaking · Day ${item.day}`, stat:null};
+}
+
+// Daily wrap headline + article, built from the real session.
 function generateMarketWrap(changes){
-  const avg = changes.reduce((a,c)=>a+c.pc,0)/changes.length;
-  const adv = changes.filter(c=>c.pc>0).length;
-  const dec = changes.filter(c=>c.pc<0).length;
-  const sorted = [...changes].sort((a,b)=>b.pc-a.pc);
-  const top = sorted[0], bot = sorted[sorted.length-1];
+  const avg=changes.reduce((a,c)=>a+c.pc,0)/changes.length;
+  const adv=changes.filter(c=>c.pc>0).length;
+  const dec=changes.filter(c=>c.pc<0).length;
+  const sorted=[...changes].sort((a,b)=>b.pc-a.pc);
+  const top=sorted[0], bot=sorted[sorted.length-1];
 
-  // Best & worst sector of the day
-  const secAgg = {};
+  const secAgg={};
   changes.forEach(c=>{ (secAgg[c.s.sector]=secAgg[c.s.sector]||[]).push(c.pc); });
-  const secAvg = Object.entries(secAgg).map(([k,v])=>({k, m:v.reduce((a,b)=>a+b,0)/v.length}))
-                       .sort((a,b)=>b.m-a.m);
-  const bestSec = secAvg[0], worstSec = secAvg[secAvg.length-1];
+  const secAvg=Object.entries(secAgg).map(([k,v])=>({k,m:v.reduce((a,b)=>a+b,0)/v.length})).sort((a,b)=>b.m-a.m);
+  const bestSec=secAvg[0], worstSec=secAvg[secAvg.length-1];
 
-  const type = avg>0.15?'good':avg<-0.15?'bad':'neutral';
+  const type= avg>0.15?'good':avg<-0.15?'bad':'neutral';
   let head;
   if(avg>=1.5)       head=`Market Wrap: stocks rip higher, index ${pctTxt(avg)}`;
   else if(avg>=0.15) head=`Market Wrap: a green session, index ${pctTxt(avg)}`;
@@ -507,12 +726,18 @@ function generateMarketWrap(changes){
   else if(avg>-1.5)  head=`Market Wrap: stocks drift lower, index ${pctTxt(avg)}`;
   else               head=`Market Wrap: broad selloff, index ${pctTxt(avg)}`;
 
-  const breadth = `${adv} advancers vs ${dec} decliners.`;
-  const leaders = `${bestSec.k} led (${pctTxt(bestSec.m)}), ${worstSec.k} lagged (${pctTxt(worstSec.m)}).`;
-  const movers  = `Top gainer ${top.s.sym} ${pctTxt(top.pc)}; worst ${bot.s.sym} ${pctTxt(bot.pc)}.`;
-  const detail  = `${breadth} ${leaders} ${movers}`;
+  const detail=`${adv} advancers vs ${dec} decliners. ${bestSec.k} led (${pctTxt(bestSec.m)}), ${worstSec.k} lagged (${pctTxt(worstSec.m)}). Top gainer ${top.s.sym} ${pctTxt(top.pc)}; worst ${bot.s.sym} ${pctTxt(bot.pc)}.`;
 
-  state.news.unshift({type, market:true, wrap:true, head, detail, day:state.day, change:avg});
+  const body=[
+    detail,
+    `Breadth ${adv>dec?'favored the bulls':adv<dec?'tilted bearish':'was evenly split'} with ${adv} advancers and ${dec} decliners. Breadth is a key gauge of a move's health: a rally powered by only one or two names is far more fragile than a broad-based advance where most stocks participate.`,
+    `Leadership came from ${bestSec.k} (${pctTxt(bestSec.m)}) while ${worstSec.k} (${pctTxt(worstSec.m)}) lagged — the day's rotation in a nutshell. ${top.s.sym} was the standout at ${pctTxt(top.pc)}; ${bot.s.sym} was the laggard at ${pctTxt(bot.pc)}.`,
+    `The index shown here is an equal-weighted average of all ten listed names, so a single high-beta mover can swing the headline number. Focus on your own position exposure and sector mix rather than the index alone. Sentiment currently reads ${sentimentInfo().label}.`
+  ];
+
+  const item={type, market:true, wrap:true, head, detail, day:state.day, change:avg};
+  item.article={body, byline:`WST Newswire · The Close · Day ${state.day}`, stat:null};
+  state.news.unshift(item);
 }
 
 /* ---------------- trading ---------------- */
@@ -525,6 +750,7 @@ function buy(stock, qty){
   stock.avgCost=(stock.avgCost*stock.shares+cost)/totalShares;
   stock.shares=totalShares;
   state.cash-=cost;
+  state.trades.unshift({day:state.day, side:'BUY', sym:stock.sym, qty, price:stock.price, value:cost, realized:null});
   toast(`Bought ${qty} ${stock.sym} @ $${stock.price.toFixed(2)} (−$${cost.toFixed(2)})`,'win');
   renderAll(); save();
 }
@@ -535,37 +761,30 @@ function sell(stock, qty){
   if(qty>stock.shares){ toast(`You only own ${stock.shares} ${stock.sym}.`,'lose'); return; }
   const proceeds=stock.price*qty;
   const realized=(stock.price-stock.avgCost)*qty;
+  const realizedPct=(stock.price/stock.avgCost-1)*100;
   stock.shares-=qty;
   if(stock.shares===0) stock.avgCost=0;
   state.cash+=proceeds;
+  state.trades.unshift({day:state.day, side:'SELL', sym:stock.sym, qty, price:stock.price, value:proceeds, realized, realizedPct});
   toast(`Sold ${qty} ${stock.sym} @ $${stock.price.toFixed(2)} (P/L ${realized>=0?'+':'−'}$${Math.abs(realized).toFixed(2)})`,
         realized>=0?'win':'lose');
   renderAll(); save();
 }
 
-/* ---------------- derived values ---------------- */
-function holdingsValue(){ return state.stocks.reduce((a,s)=>a+s.price*s.shares,0); }
-function netWorth(){ return state.cash+holdingsValue(); }
-
 /* ---------------- rendering ---------------- */
-const $=id=>document.getElementById(id);
-function fmt(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+let currentView='markets';
 
 function renderAll(){
   renderHeader();
   renderMarket();
   renderPortfolio();
   renderNews();
-  renderChart();
   renderTradePanel();
   $('day').textContent=state.day;
-  const mood=state.marketMood;
-  let label='Neutral',col='var(--muted)';
-  if(mood>0.3){label='Bullish 🐂';col='var(--green)';}
-  else if(mood<-0.3){label='Bearish 🐻';col='var(--red)';}
-  else if(mood>0.1){label='Optimistic';col='var(--green)';}
-  else if(mood<-0.1){label='Cautious';col='var(--red)';}
-  const sent=$('sentiment'); sent.textContent=label; sent.style.color=col;
+  const s=sentimentInfo();
+  const sent=$('sentiment'); sent.textContent=s.label; sent.style.color=s.col;
+  if(currentView==='markets'){ renderChart(); renderQuoteStats(); }
+  else { renderEquity(); renderHistory(); }
 }
 
 function renderHeader(){
@@ -574,11 +793,9 @@ function renderHeader(){
   $('holdval').textContent=fmt(hv);
   $('networth').textContent=fmt(nw);
   const t=$('totalpl');
-  t.textContent=(pl>=0?'+':'−')+'$'+Math.abs(pl).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  t.textContent=signed(pl);
   t.className='val '+(pl>=0?'pl-pos':'pl-neg');
 }
-
-function pctChange(s){ return (s.price-s.prevClose)/s.prevClose*100; }
 
 function sparkline(s){
   const h=s.history.slice(-30);
@@ -596,7 +813,7 @@ function sparkline(s){
 function renderMarket(){
   const tb=$('marketBody'); tb.innerHTML='';
   state.stocks.forEach((s,i)=>{
-    const pc=pctChange(s);
+    const pc=pctChange(s), pe=peOf(s);
     const tr=document.createElement('tr');
     tr.className='stock-row'+(i===state.selected?' sel':'');
     tr.onclick=()=>{state.selected=i;renderAll();};
@@ -604,8 +821,10 @@ function renderMarket(){
       <td><div class="sym">${s.sym}</div><div class="name">${s.name}</div></td>
       <td class="r">$${s.price.toFixed(2)}</td>
       <td class="r ${pc>=0?'up':'down'}">${pc>=0?'+':''}${pc.toFixed(2)}%</td>
+      <td class="r">${isNaN(pe)?'<span class="mutecell">n/m</span>':pe.toFixed(1)+'×'}</td>
+      <td class="r">${fmtCap(capOf(s))}</td>
       <td class="r">${sparkline(s)}</td>
-      <td class="r">${s.shares>0?`<span class="up">${s.shares}</span>`:'<span style="color:var(--muted)">—</span>'}</td>`;
+      <td class="r">${s.shares>0?`<span class="up">${s.shares}</span>`:'<span class="mutecell">—</span>'}</td>`;
     tb.appendChild(tr);
   });
 }
@@ -633,29 +852,51 @@ function renderPortfolio(){
   });
 }
 
+function renderQuoteStats(){
+  const box=$('quoteStats');
+  const s=state.stocks[state.selected];
+  if(!s){ box.innerHTML=''; return; }
+  const hi=Math.max(...s.history), lo=Math.min(...s.history);
+  const pe=peOf(s), dy=yieldOf(s);
+  const cells=[
+    ['Prev Close', '$'+s.prevClose.toFixed(2)],
+    ['Open', '$'+s.open.toFixed(2)],
+    ['Day Range', '$'+s.dayLow.toFixed(2)+' – $'+s.dayHigh.toFixed(2)],
+    ['Period Range', '$'+lo.toFixed(2)+' – $'+hi.toFixed(2)],
+    ['Volume', fmtVol(s.volume)],
+    ['Mkt Cap', fmtCap(capOf(s))],
+    ['P/E', isNaN(pe)?'n/m':pe.toFixed(1)+'×'],
+    ['EPS', '$'+s.eps.toFixed(2)],
+    ['Div Yield', dy>0?dy.toFixed(2)+'%':'—'],
+    ['Beta', s.beta.toFixed(2)],
+    ['Sector', s.sector],
+  ];
+  box.innerHTML=cells.map(c=>`<div class="qs"><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div>`).join('');
+}
+
 function renderNews(){
   const f=$('newsFeed'); f.innerHTML='';
   if(state.news.length===0){
-    f.innerHTML=`<div class="empty">No news yet. Advance the day to see market activity.</div>`;
+    f.innerHTML=`<div class="empty">No news yet. The market opens as soon as the clock advances.</div>`;
     return;
   }
   state.news.forEach(n=>{
     const div=document.createElement('div');
     div.className='news-item';
-    const isMarket = n.market;
-    const cls = isMarket ? 'market' : (n.type==='good'?'good':n.type==='bad'?'bad':'neutral');
-    const tagTxt = n.wrap ? '📊 Wrap' : isMarket ? '⚡ Market'
-                 : n.type==='good' ? '▲ Bull' : n.type==='bad' ? '▼ Bear' : '• Info';
+    div.onclick=()=>openArticle(n);
+    const isMarket=n.market;
+    const cls=isMarket?'market':(n.type==='good'?'good':n.type==='bad'?'bad':'neutral');
+    const tagTxt=n.wrap?'📊 Wrap':isMarket?'⚡ Market':n.type==='good'?'▲ Bull':n.type==='bad'?'▼ Bear':'• Info';
     let chip='';
     if(n.change!==null && n.change!==undefined){
-      const ccls = n.change>=0?'up':'down';
-      const lbl = n.sym ? `${n.sym} ${pctTxt(n.change)}` : `Index ${pctTxt(n.change)}`;
-      chip = `<span class="move-chip ${ccls}">${lbl}</span>`;
+      const ccls=n.change>=0?'up':'down';
+      const lbl=n.sym?`${n.sym} ${pctTxt(n.change)}`:`Index ${pctTxt(n.change)}`;
+      chip=`<span class="move-chip ${ccls}">${lbl}</span>`;
     }
     div.innerHTML=`
       <div class="news-top"><span class="tag ${cls}">${tagTxt}</span><span class="news-head">${n.head||n.text||''}</span></div>
       ${n.detail?`<div class="news-detail">${n.detail}</div>`:''}
-      <div class="news-meta">${chip}<span class="time">Day ${n.day}</span></div>`;
+      <div class="news-meta">${chip}<span class="time">Day ${n.day}</span><span class="read-more">Read analysis →</span></div>`;
     f.appendChild(div);
   });
 }
@@ -667,55 +908,135 @@ function renderTradePanel(){
   const info=$('holdInfo');
   const maxBuy=Math.floor(state.cash/s.price);
   info.innerHTML = s.shares>0
-    ? `You own <strong>${s.shares}</strong> @ avg $${s.avgCost.toFixed(2)} · Max buy: ${maxBuy} shares`
+    ? `You own <strong>${s.shares}</strong> ${s.sym} @ avg $${s.avgCost.toFixed(2)} · Max buy: ${maxBuy} shares`
     : `Max buy with current cash: <strong>${maxBuy}</strong> shares`;
 }
 
+/* ---------------- news article overlay ---------------- */
+function openArticle(n){
+  pauseSim();
+  const isMarket=n.market;
+  const cls=isMarket?'market':(n.type==='good'?'good':n.type==='bad'?'bad':'neutral');
+  const tag=$('artTag');
+  tag.className='article-tag tag '+cls;
+  tag.textContent = n.wrap?'📊 Market Wrap':isMarket?'⚡ Market Alert':n.sector?'🏭 Sector Watch':n.type==='good'?'▲ Bullish':n.type==='bad'?'▼ Bearish':'• Market Note';
+  $('artTitle').textContent=n.head||n.text||'';
+  $('artByline').textContent=(n.article&&n.article.byline)||`WST Newswire · Day ${n.day}`;
+
+  // market-reaction chip
+  const react=$('artReaction');
+  if(n.change!==null && n.change!==undefined){
+    const ccls=n.change>=0?'up':'down';
+    const lbl=n.sym?`${n.sym} ${pctTxt(n.change)} on the day`:`Market index ${pctTxt(n.change)} on the day`;
+    react.innerHTML=`<span class="move-chip ${ccls}" style="font-size:12px;padding:5px 12px;">${lbl}</span>`;
+  }else react.innerHTML='';
+
+  // body
+  const paras=(n.article&&n.article.body)||[n.detail||''];
+  $('artBody').innerHTML=paras.map(p=>`<p>${p}</p>`).join('');
+
+  // stat box + trade action for company stories
+  const statBox=$('artStat'), actions=$('artActions');
+  const st=n.article&&n.article.stat;
+  if(st){
+    const cells=[
+      ['Last Price','$'+st.price.toFixed(2)],
+      ['P/E', isNaN(st.pe)?'n/m':st.pe.toFixed(1)+'×'],
+      ['Mkt Cap', fmtCap(st.cap)],
+      ['EPS','$'+st.eps.toFixed(2)],
+      ['Div Yield', st.dy>0?st.dy.toFixed(2)+'%':'—'],
+      ['Beta', st.beta.toFixed(2)],
+      ['Sector', st.sector],
+      ['Analyst', st.rating+' · $'+st.target.toFixed(2)],
+    ];
+    statBox.style.display='grid';
+    statBox.innerHTML=cells.map(c=>`<div class="cell"><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div>`).join('');
+    actions.innerHTML=`<button class="btn-primary" id="artTrade">Trade ${n.sym} ▶</button>`;
+    $('artTrade').onclick=()=>{
+      const idx=state.stocks.findIndex(x=>x.sym===n.sym);
+      if(idx>=0) state.selected=idx;
+      closeArticle();
+      switchView('markets');
+    };
+  }else{
+    statBox.style.display='none'; statBox.innerHTML='';
+    actions.innerHTML='';
+  }
+
+  $('articleBg').classList.add('show');
+}
+function closeArticle(){
+  $('articleBg').classList.remove('show');
+  resumeSim();
+}
+
+/* ---------------- price chart ---------------- */
 let chartCtx;
 function renderChart(){
-  const s=state.stocks[state.selected];
   const canvas=$('chart');
-  if(!chartCtx){
-    chartCtx=canvas.getContext('2d');
-  }
-  // size for crispness
+  if(!chartCtx) chartCtx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   const w=canvas.clientWidth, h=canvas.clientHeight;
+  if(w===0) return; // hidden view
   canvas.width=w*dpr; canvas.height=h*dpr;
   const ctx=chartCtx; ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
 
-  if(!s){ return; }
+  const s=state.stocks[state.selected];
+  if(!s) return;
   const data=s.history;
-  $('chartSym').textContent=`${s.sym} · ${s.name}`;
+  $('chartSym').textContent=`${s.sym} · ${s.name} · ${s.sector}`;
   $('chartPrice').textContent='$'+s.price.toFixed(2);
   const pc=pctChange(s);
   const pe=$('chartPct');
   pe.textContent=`${pc>=0?'▲ +':'▼ '}${pc.toFixed(2)}% today`;
   pe.className='pct '+(pc>=0?'up':'down');
 
-  const pad=30;
-  const min=Math.min(...data), max=Math.max(...data);
+  drawSeries(ctx,w,h,data, s.shares>0?s.avgCost:null, s.avgCost);
+}
+
+/* ---------------- net-worth (equity) chart ---------------- */
+function renderEquity(){
+  const canvas=$('equityChart');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const w=canvas.clientWidth, h=canvas.clientHeight;
+  if(w===0) return;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const data=state.equityCurve.map(p=>p.nw);
+  if(data.length<2){
+    ctx.fillStyle='#5d6b80'; ctx.font='13px Segoe UI';
+    ctx.fillText('Your net-worth curve will appear here as the days roll by…',20,h/2);
+    return;
+  }
+  drawSeries(ctx,w,h,data, START_CASH, START_CASH, true);
+}
+
+// Shared line/area chart. baseline (dashed gold) optional; colorFromStart uses first vs last.
+function drawSeries(ctx,w,h,data,baseline,baselineLabelVal,isEquity){
+  const pad=34;
+  let min=Math.min(...data), max=Math.max(...data);
+  if(baseline!=null){ min=Math.min(min,baseline); max=Math.max(max,baseline); }
   const range=(max-min)||1;
   const xStep=(w-pad*2)/Math.max(1,(data.length-1));
   const yOf=p=>h-pad-((p-min)/range)*(h-pad*1.4);
 
-  // grid lines
-  ctx.strokeStyle='rgba(255,255,255,0.05)';
-  ctx.lineWidth=1;
-  ctx.fillStyle='#5d6b80';
-  ctx.font='10px Segoe UI';
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+  ctx.fillStyle='#5d6b80'; ctx.font='10px Segoe UI';
   for(let i=0;i<=4;i++){
     const yy=pad*0.5+i*((h-pad*1.4)/4);
     ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(w-pad,yy);ctx.stroke();
     const price=max-(i/4)*range;
-    ctx.fillText('$'+price.toFixed(2),2,yy+3);
+    ctx.fillText('$'+price.toLocaleString('en-US',{maximumFractionDigits: price>=1000?0:2}),2,yy+3);
   }
 
   const rising=data[data.length-1]>=data[0];
   const lineCol=rising?'#16c784':'#ea3943';
 
-  // area fill
+  // area
   ctx.beginPath();
   data.forEach((p,i)=>{const x=pad+i*xStep,y=yOf(p); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
   ctx.lineTo(pad+(data.length-1)*xStep,h-pad);
@@ -726,28 +1047,74 @@ function renderChart(){
   grad.addColorStop(1,'rgba(0,0,0,0)');
   ctx.fillStyle=grad; ctx.fill();
 
-  // price line
+  // line
   ctx.beginPath();
   data.forEach((p,i)=>{const x=pad+i*xStep,y=yOf(p); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
   ctx.strokeStyle=lineCol; ctx.lineWidth=2; ctx.stroke();
 
-  // avg cost line if holding
-  if(s.shares>0){
-    const y=yOf(s.avgCost);
+  // baseline (avg cost, or starting capital)
+  if(baseline!=null){
+    const y=yOf(baseline);
     if(y>pad*0.4 && y<h-pad*0.4){
       ctx.setLineDash([4,4]);
-      ctx.strokeStyle='rgba(240,185,11,0.8)';
-      ctx.lineWidth=1;
+      ctx.strokeStyle='rgba(240,185,11,0.8)'; ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-pad,y);ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle='var(--accent)';ctx.fillStyle='#f0b90b';
-      ctx.fillText('avg $'+s.avgCost.toFixed(2), w-pad-70, y-4);
+      ctx.fillStyle='#f0b90b';
+      ctx.fillText((isEquity?'start $':'avg $')+baselineLabelVal.toLocaleString('en-US',{maximumFractionDigits: baselineLabelVal>=1000?0:2}), w-pad-88, y-4);
     }
   }
 
   // last dot
-  const lx=pad+(data.length-1)*xStep, ly=yOf(s.price);
+  const lx=pad+(data.length-1)*xStep, ly=yOf(data[data.length-1]);
   ctx.beginPath();ctx.arc(lx,ly,3.5,0,Math.PI*2);ctx.fillStyle=lineCol;ctx.fill();
+}
+
+/* ---------------- history view ---------------- */
+function renderHistory(){
+  const nw=netWorth();
+  const totalRet=(nw/START_CASH-1)*100;
+  const unreal=state.stocks.reduce((a,s)=>a+(s.price-s.avgCost)*s.shares,0);
+  const sells=state.trades.filter(t=>t.side==='SELL');
+  const realized=sells.reduce((a,t)=>a+(t.realized||0),0);
+  const wins=sells.filter(t=>(t.realized||0)>0).length;
+  const winRate=sells.length?(wins/sells.length*100):0;
+  const realizedVals=sells.map(t=>t.realized||0);
+  const best=realizedVals.length?Math.max(...realizedVals):0;
+  const worst=realizedVals.length?Math.min(...realizedVals):0;
+
+  const cards=[
+    ['Net Worth', fmt(nw), ''],
+    ['Total Return', (totalRet>=0?'+':'')+totalRet.toFixed(2)+'%', totalRet>=0?'pl-pos':'pl-neg'],
+    ['Realized P/L', signed(realized), realized>=0?'pl-pos':'pl-neg'],
+    ['Unrealized P/L', signed(unreal), unreal>=0?'pl-pos':'pl-neg'],
+    ['Trades', String(state.trades.length), ''],
+    ['Win Rate', sells.length?winRate.toFixed(0)+'% ('+wins+'/'+sells.length+')':'—', ''],
+    ['Best Trade', sells.length?signed(best):'—', 'pl-pos'],
+    ['Worst Trade', sells.length?signed(worst):'—', 'pl-neg'],
+  ];
+  $('histSummary').innerHTML=cards.map(c=>
+    `<div class="hist-card"><div class="k">${c[0]}</div><div class="v ${c[2]}">${c[1]}</div></div>`).join('');
+
+  const tb=$('tradeLogBody');
+  if(state.trades.length===0){
+    tb.innerHTML=`<tr><td colspan="7" class="empty">No trades yet. Buy or sell a stock and it will show up here.</td></tr>`;
+    return;
+  }
+  tb.innerHTML=state.trades.map(t=>{
+    const realCell = t.side==='SELL'
+      ? `<span class="${(t.realized||0)>=0?'up':'down'}">${signed(t.realized||0)}${t.realizedPct!=null?` (${(t.realizedPct>=0?'+':'')}${t.realizedPct.toFixed(1)}%)`:''}</span>`
+      : '<span class="mutecell">—</span>';
+    return `<tr>
+      <td>${t.day}</td>
+      <td class="${t.side==='BUY'?'side-buy':'side-sell'}">${t.side}</td>
+      <td class="sym">${t.sym}</td>
+      <td class="r">${t.qty}</td>
+      <td class="r">$${t.price.toFixed(2)}</td>
+      <td class="r">$${t.value.toFixed(2)}</td>
+      <td class="r">${realCell}</td>
+    </tr>`;
+  }).join('');
 }
 
 /* ---------------- toasts ---------------- */
@@ -759,19 +1126,17 @@ function toast(msg,type){
   setTimeout(()=>{t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(()=>t.remove(),400);},3000);
 }
 
-/* ---------------- milestones / game feel ---------------- */
+/* ---------------- milestones ---------------- */
 let milestones={};
 function checkMilestones(){
   const nw=netWorth();
-  const tiers=[2000,5000,10000,25000,50000,100000];
-  tiers.forEach(tier=>{
+  [2000,5000,10000,25000,50000,100000].forEach(tier=>{
     if(nw>=tier && !milestones[tier]){
       milestones[tier]=true;
       showModal('🎉 Milestone Reached!', fmt(nw),
         `Your net worth crossed ${fmt(tier)}! You started with just $1,000. Keep compounding — but beware the next crash.`);
     }
   });
-  // bankruptcy warning
   if(nw< START_CASH*0.3 && !milestones.broke){
     milestones.broke=true;
     showModal('⚠️ Heavy Losses', fmt(nw),
@@ -779,6 +1144,7 @@ function checkMilestones(){
   }
 }
 function showModal(title,figure,text){
+  pauseSim();
   $('modalTitle').textContent=title;
   $('modalFigure').textContent=figure;
   $('modalText').textContent=text;
@@ -787,27 +1153,44 @@ function showModal(title,figure,text){
 
 /* ---------------- auto-play loop ---------------- */
 let timer=null;
-function setSpeed(ms){
-  if(timer){clearInterval(timer);timer=null;}
-  if(ms>0){ timer=setInterval(advanceDay, ms); }
+let currentSpeed=2000; // ms per day (1×)
+function startTimer(){
+  if(timer) clearInterval(timer);
+  timer=setInterval(advanceDay, currentSpeed);
+}
+function setSpeed(ms){ currentSpeed=ms; startTimer(); }
+function pauseSim(){ if(timer){ clearInterval(timer); timer=null; } }
+function resumeSim(){ if(!timer && !anyModalOpen()) startTimer(); }
+function anyModalOpen(){ return $('articleBg').classList.contains('show') || $('modalBg').classList.contains('show'); }
+
+/* ---------------- views ---------------- */
+function switchView(v){
+  currentView=v;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  $('view-markets').classList.toggle('active', v==='markets');
+  $('view-history').classList.toggle('active', v==='history');
+  renderAll();
 }
 
 /* ---------------- event wiring ---------------- */
 function init(){
   state=load()||freshState();
-  // recompute milestones already passed so we don't re-trigger
   const nw=netWorth();
   [2000,5000,10000,25000,50000,100000].forEach(t=>{ if(nw>=t) milestones[t]=true; });
 
   renderAll();
 
-  $('nextDay').onclick=advanceDay;
+  document.querySelectorAll('#tabs button').forEach(b=>{
+    b.onclick=()=>switchView(b.dataset.view);
+  });
+
   $('resetBtn').onclick=()=>{
     if(confirm('Reset the game and start over with $1,000?')){
       state=freshState(); milestones={};
-      setSpeed(0);
-      document.querySelectorAll('#speedGroup button').forEach(b=>b.classList.remove('active'));
-      document.querySelector('#speedGroup button[data-speed="0"]').classList.add('active');
+      document.querySelectorAll('#speedGroup button').forEach(x=>x.classList.remove('active'));
+      document.querySelector('#speedGroup button[data-speed="2000"]').classList.add('active');
+      setSpeed(2000);
+      switchView('markets');
       renderAll(); save();
       toast('New game started. Good luck!','win');
     }
@@ -827,15 +1210,19 @@ function init(){
   document.querySelectorAll('.qbtns button').forEach(b=>{
     b.onclick=()=>{
       const s=state.stocks[state.selected];
-      if(b.dataset.q==='max'){
-        $('qty').value=Math.floor(state.cash/s.price)||1;
-      }else{
-        $('qty').value=b.dataset.q;
-      }
+      if(b.dataset.q==='max') $('qty').value=Math.floor(state.cash/s.price)||1;
+      else $('qty').value=b.dataset.q;
     };
   });
 
-  window.addEventListener('resize',renderChart);
+  $('articleClose').onclick=closeArticle;
+  $('articleBg').onclick=e=>{ if(e.target===$('articleBg')) closeArticle(); };
+  $('modalClose').onclick=()=>{ $('modalBg').classList.remove('show'); resumeSim(); };
+
+  window.addEventListener('resize',()=>{ renderChart(); renderEquity(); });
+
+  // Time runs automatically — start the clock at 1×.
+  setSpeed(2000);
 }
 
 document.addEventListener('DOMContentLoaded',init);
