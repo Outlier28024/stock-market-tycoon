@@ -205,6 +205,31 @@
   .article-stat .cell{background:var(--panel2);padding:10px 12px;}
   .article-stat .cell .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
   .article-stat .cell .v{font-size:15px;font-weight:700;margin-top:3px;}
+
+  /* account + pause */
+  .acct{display:flex;align-items:center;gap:8px;}
+  .acct-name{font-size:12px;color:var(--text);font-weight:600;background:var(--panel);border:1px solid var(--border);padding:8px 12px;border-radius:8px;}
+  #pauseBtn{min-width:106px;}
+  .pause-active{background:var(--green)!important;color:#04231a!important;border-color:var(--green)!important;}
+
+  /* leaderboard */
+  .lb-note{font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.55;}
+  .lb-table td,.lb-table th{padding:11px 8px;}
+  .lb-rank{font-weight:800;width:56px;font-size:15px;}
+  .lb-row.you{background:#16263a;box-shadow:inset 3px 0 0 var(--accent);}
+  .lb-score{font-weight:700;}
+  .lb-you-tag{font-size:10px;background:rgba(240,185,11,.15);color:var(--accent);padding:2px 7px;border-radius:5px;margin-left:6px;font-weight:700;}
+  .lb-world-tag{font-size:10px;color:var(--muted);}
+
+  /* auth modal */
+  .modal.auth{text-align:left;max-width:380px;}
+  .modal.auth h2{color:var(--accent);text-align:center;}
+  .modal.auth .sub{color:var(--muted);font-size:12px;text-align:center;margin-bottom:16px;line-height:1.5;}
+  .auth-tabs{display:flex;gap:6px;margin-bottom:16px;}
+  .auth-tabs button{flex:1;background:var(--panel2);color:var(--muted);border:1px solid var(--border);}
+  .auth-tabs button.active{background:var(--accent);color:#1a1205;}
+  .auth-field{display:block;width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px;font-family:inherit;font-size:14px;margin-bottom:10px;}
+  .auth-err{color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px;}
 </style>
 </head>
 <body>
@@ -229,6 +254,7 @@
     <div class="tabs" id="tabs">
       <button data-view="markets" class="active">📊 Markets</button>
       <button data-view="history">📒 History</button>
+      <button data-view="ranking">🏆 Ranking</button>
     </div>
     <div class="day-pill">📅 Day <span id="day">1</span></div>
     <div class="speed-group" id="speedGroup">
@@ -237,8 +263,10 @@
       <button data-speed="1000">2×</button>
       <button data-speed="400">5×</button>
     </div>
+    <button class="btn-ghost" id="pauseBtn">⏸ Pause</button>
     <button class="btn-ghost" id="resetBtn">↺ Reset</button>
-    <span style="color:var(--muted);font-size:12px;margin-left:auto;">Market sentiment: <strong id="sentiment">Neutral</strong></span>
+    <span style="color:var(--muted);font-size:12px;">Sentiment: <strong id="sentiment">Neutral</strong></span>
+    <div class="acct" id="accountArea" style="margin-left:auto;"></div>
   </div>
 
   <!-- ===================== MARKETS VIEW ===================== -->
@@ -321,6 +349,21 @@
     </div>
   </div>
 
+  <!-- ===================== RANKING VIEW ===================== -->
+  <div class="view" id="view-ranking">
+    <div class="card">
+      <h2>🏆 Global Leaderboard — Highest Net Worth</h2>
+      <div class="lb-note">Compete against the world's top traders. Your best-ever net worth is recorded automatically and updated live as you play. Log in to save your rank under your own name.</div>
+      <div style="overflow-x:auto;">
+      <table class="lb-table">
+        <thead><tr><th>Rank</th><th>Trader</th><th class="r">Best Net Worth</th></tr></thead>
+        <tbody id="lbBody"></tbody>
+      </table>
+      </div>
+      <div id="lbYou" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
   <div class="footer-note">
     Simulated market for entertainment &amp; education — prices follow a geometric random walk with volatility, momentum, sector correlation, valuation, beta and random news shocks.<br>
     Not financial advice. Goal: grow your $1,000 as large as you can. Time runs automatically — pick a speed, watch the news, and manage your risk.
@@ -348,6 +391,23 @@
     <div class="article-body" id="artBody"></div>
     <div class="article-stat" id="artStat" style="display:none;"></div>
     <div id="artActions"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="authBg">
+  <div class="modal auth">
+    <h2>🔐 Account</h2>
+    <div class="sub">Sign in to save your progress and claim your spot on the global leaderboard.</div>
+    <div class="auth-tabs" id="authTabs">
+      <button data-mode="login" class="active">Log In</button>
+      <button data-mode="register">Register</button>
+    </div>
+    <input class="auth-field" id="authUser" placeholder="Username" autocomplete="off" maxlength="16">
+    <input class="auth-field" id="authPass" type="password" placeholder="Password" maxlength="32">
+    <div class="auth-err" id="authErr"></div>
+    <button class="btn-primary" id="authSubmit" style="width:100%;">Log In</button>
+    <button class="btn-ghost" id="authCancel" style="width:100%;margin-top:8px;">Cancel</button>
+    <div class="lb-note" style="margin-top:14px;text-align:center;">Local accounts only — credentials are stored in this browser, never sent to a server. Please don't reuse a real password.</div>
   </div>
 </div>
 
@@ -459,13 +519,15 @@ function freshState(){
   };
 }
 
-/* ---------------- persistence ---------------- */
+/* ---------------- persistence (per user) ---------------- */
+let currentUser=null; // null = playing as Guest
+function saveKey(){ return currentUser ? 'wst_save_u_'+currentUser : 'wst_save'; }
 function save(){
-  try{ localStorage.setItem('wst_save', JSON.stringify(state)); }catch(e){}
+  try{ localStorage.setItem(saveKey(), JSON.stringify(state)); }catch(e){}
 }
 function load(){
   try{
-    const raw=localStorage.getItem('wst_save');
+    const raw=localStorage.getItem(saveKey());
     if(raw){ const s=JSON.parse(raw); if(s&&s.stocks) return migrate(s); }
   }catch(e){}
   return null;
@@ -642,9 +704,10 @@ function advanceDay(){
 
   while(state.news.length>80) state.news.pop();
 
-  // ---- Record the equity curve ----
+  // ---- Record the equity curve + leaderboard best ----
   state.equityCurve.push({day:state.day, nw:netWorth()});
   if(state.equityCurve.length>600) state.equityCurve.shift();
+  recordBest();
 
   renderAll();
   save();
@@ -784,7 +847,8 @@ function renderAll(){
   const s=sentimentInfo();
   const sent=$('sentiment'); sent.textContent=s.label; sent.style.color=s.col;
   if(currentView==='markets'){ renderChart(); renderQuoteStats(); }
-  else { renderEquity(); renderHistory(); }
+  else if(currentView==='history'){ renderEquity(); renderHistory(); }
+  else if(currentView==='ranking'){ renderRanking(); }
 }
 
 function renderHeader(){
@@ -914,7 +978,6 @@ function renderTradePanel(){
 
 /* ---------------- news article overlay ---------------- */
 function openArticle(n){
-  pauseSim();
   const isMarket=n.market;
   const cls=isMarket?'market':(n.type==='good'?'good':n.type==='bad'?'bad':'neutral');
   const tag=$('artTag');
@@ -964,10 +1027,11 @@ function openArticle(n){
   }
 
   $('articleBg').classList.add('show');
+  updateTimer(); // pause while reading
 }
 function closeArticle(){
   $('articleBg').classList.remove('show');
-  resumeSim();
+  updateTimer();
 }
 
 /* ---------------- price chart ---------------- */
@@ -1144,24 +1208,164 @@ function checkMilestones(){
   }
 }
 function showModal(title,figure,text){
-  pauseSim();
   $('modalTitle').textContent=title;
   $('modalFigure').textContent=figure;
   $('modalText').textContent=text;
   $('modalBg').classList.add('show');
+  updateTimer();
 }
 
 /* ---------------- auto-play loop ---------------- */
 let timer=null;
 let currentSpeed=2000; // ms per day (1×)
-function startTimer(){
-  if(timer) clearInterval(timer);
-  timer=setInterval(advanceDay, currentSpeed);
+let userPaused=false;  // explicit pause-button state
+function anyModalOpen(){
+  return $('articleBg').classList.contains('show')
+      || $('modalBg').classList.contains('show')
+      || $('authBg').classList.contains('show');
 }
-function setSpeed(ms){ currentSpeed=ms; startTimer(); }
-function pauseSim(){ if(timer){ clearInterval(timer); timer=null; } }
-function resumeSim(){ if(!timer && !anyModalOpen()) startTimer(); }
-function anyModalOpen(){ return $('articleBg').classList.contains('show') || $('modalBg').classList.contains('show'); }
+// Single source of truth: the clock ticks only when not paused and no modal is open.
+function updateTimer(){
+  if(timer){ clearInterval(timer); timer=null; }
+  if(!userPaused && !anyModalOpen()) timer=setInterval(advanceDay, currentSpeed);
+  renderPauseBtn();
+}
+function setSpeed(ms){ currentSpeed=ms; userPaused=false; updateTimer(); } // picking a speed resumes
+function togglePause(){ userPaused=!userPaused; updateTimer(); }
+function renderPauseBtn(){
+  const b=$('pauseBtn'); if(!b) return;
+  b.textContent = userPaused ? '▶ Resume' : '⏸ Pause';
+  b.classList.toggle('pause-active', userPaused);
+}
+
+/* ---------------- accounts & auth (local, browser-only) ---------------- */
+function getAccounts(){ try{ return JSON.parse(localStorage.getItem('wst_accounts'))||{}; }catch(e){ return {}; } }
+function setAccounts(a){ try{ localStorage.setItem('wst_accounts', JSON.stringify(a)); }catch(e){} }
+// Lightweight obfuscation so passwords aren't stored in plain text. NOT real security.
+function hashPass(s){ let h=5381; for(let i=0;i<s.length;i++) h=(((h<<5)+h)^s.charCodeAt(i))>>>0; return h.toString(16); }
+
+function loadUserState(){
+  state=load()||freshState();
+  milestones={};
+  const nw=netWorth();
+  [2000,5000,10000,25000,50000,100000].forEach(t=>{ if(nw>=t) milestones[t]=true; });
+  renderAccount();
+  switchView('markets');
+  save();
+}
+function logout(){
+  currentUser=null; localStorage.removeItem('wst_current');
+  loadUserState();
+  toast('Logged out — now playing as Guest.','');
+}
+function renderAccount(){
+  const el=$('accountArea');
+  if(currentUser){
+    el.innerHTML=`<span class="acct-name">👤 ${currentUser}</span><button class="btn-ghost" id="authBtn">Logout</button>`;
+    $('authBtn').onclick=logout;
+  }else{
+    el.innerHTML=`<span class="acct-name">👤 Guest</span><button class="btn-primary" id="authBtn">Log In</button>`;
+    $('authBtn').onclick=openAuth;
+  }
+}
+
+let authMode='login';
+function openAuth(){
+  setAuthMode('login');
+  $('authUser').value=''; $('authPass').value=''; $('authErr').textContent='';
+  $('authBg').classList.add('show'); updateTimer();
+  setTimeout(()=>$('authUser').focus(),50);
+}
+function closeAuth(){ $('authBg').classList.remove('show'); updateTimer(); }
+function setAuthMode(m){
+  authMode=m;
+  document.querySelectorAll('#authTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
+  $('authSubmit').textContent = m==='login' ? 'Log In' : 'Create Account';
+  $('authErr').textContent='';
+}
+function submitAuth(){
+  const u=$('authUser').value.trim(), p=$('authPass').value;
+  const err=$('authErr');
+  if(/[^a-zA-Z0-9_]/.test(u)){ err.textContent='Use letters, numbers and underscores only.'; return; }
+  if(authMode==='register'){
+    if(u.length<3){ err.textContent='Username must be at least 3 characters.'; return; }
+    if(p.length<4){ err.textContent='Password must be at least 4 characters.'; return; }
+    const a=getAccounts();
+    if(a[u]){ err.textContent='That username is already taken.'; return; }
+    a[u]={pass:hashPass(p), best:START_CASH, created:Date.now()};
+    setAccounts(a);
+    currentUser=u; localStorage.setItem('wst_current',u);
+    closeAuth(); loadUserState(); recordBest();
+    toast('Account created — welcome, '+u+'!','win');
+  }else{
+    const a=getAccounts();
+    if(!a[u]){ err.textContent='No account with that username. Try Register.'; return; }
+    if(a[u].pass!==hashPass(p)){ err.textContent='Incorrect password.'; return; }
+    currentUser=u; localStorage.setItem('wst_current',u);
+    closeAuth(); loadUserState();
+    toast('Welcome back, '+u+'!','win');
+  }
+}
+
+/* ---------------- leaderboard ---------------- */
+// Seeded "world" high scores (this is an offline build with no server).
+const WORLD_SCORES=[
+  {name:'QuantKing',score:48250000},
+  {name:'AlgoWolf',score:31740000},
+  {name:'Daytona_Dan',score:19880000},
+  {name:'BullRunBella',score:12450000},
+  {name:'ShortSqueezer',score:7320000},
+  {name:'DiamondHands',score:4180000},
+  {name:'MacroMaven',score:2560000},
+  {name:'TheOracle',score:1490000},
+  {name:'CandleNinja',score:865000},
+  {name:'VolHunter',score:512000},
+  {name:'PipPirate',score:318000},
+  {name:'SwingLord',score:184000},
+  {name:'MoonTrader',score:96500},
+  {name:'RookieRick',score:41200},
+  {name:'PaperHandPete',score:12800},
+];
+function playerBest(){
+  if(currentUser){ const a=getAccounts(); return Math.max((a[currentUser]&&a[currentUser].best)||START_CASH, netWorth()); }
+  return Math.max(parseFloat(localStorage.getItem('wst_guest_best'))||START_CASH, netWorth());
+}
+function recordBest(){
+  const nw=netWorth();
+  if(currentUser){
+    const a=getAccounts();
+    if(a[currentUser] && nw>a[currentUser].best){ a[currentUser].best=nw; setAccounts(a); }
+  }else{
+    const g=parseFloat(localStorage.getItem('wst_guest_best'))||START_CASH;
+    if(nw>g) localStorage.setItem('wst_guest_best', String(nw));
+  }
+}
+function buildLeaderboard(){
+  const rows=WORLD_SCORES.map(w=>({name:w.name, score:w.score, world:true}));
+  const a=getAccounts();
+  Object.keys(a).forEach(u=>{
+    rows.push({name:u, score:(u===currentUser?Math.max(a[u].best,netWorth()):a[u].best), you:u===currentUser});
+  });
+  if(!currentUser) rows.push({name:'You (Guest)', score:playerBest(), you:true});
+  rows.sort((x,y)=>y.score-x.score);
+  return rows;
+}
+function renderRanking(){
+  recordBest();
+  const rows=buildLeaderboard();
+  const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+  $('lbBody').innerHTML=rows.slice(0,20).map((r,i)=>`
+    <tr class="lb-row${r.you?' you':''}">
+      <td class="lb-rank">${medal(i)}</td>
+      <td>${r.name}${r.you?'<span class="lb-you-tag">YOU</span>':r.world?' <span class="lb-world-tag">· world</span>':''}</td>
+      <td class="r lb-score">${fmt(r.score)}</td>
+    </tr>`).join('');
+  const youIdx=rows.findIndex(r=>r.you);
+  const you=$('lbYou');
+  you.innerHTML = youIdx>=0
+    ? `<div class="lb-note">Your global rank: <strong style="color:var(--accent)">#${youIdx+1}</strong> of ${rows.length} traders · Best net worth <strong>${fmt(rows[youIdx].score)}</strong>${youIdx>=20?' — keep climbing to break into the top 20!':''}</div>`
+    : '';
+}
 
 /* ---------------- views ---------------- */
 function switchView(v){
@@ -1169,20 +1373,38 @@ function switchView(v){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
   $('view-markets').classList.toggle('active', v==='markets');
   $('view-history').classList.toggle('active', v==='history');
+  $('view-ranking').classList.toggle('active', v==='ranking');
   renderAll();
 }
 
 /* ---------------- event wiring ---------------- */
 function init(){
+  // restore logged-in user if their account still exists
+  const savedUser=localStorage.getItem('wst_current');
+  const accts=getAccounts();
+  if(savedUser && accts[savedUser]) currentUser=savedUser;
+
   state=load()||freshState();
   const nw=netWorth();
   [2000,5000,10000,25000,50000,100000].forEach(t=>{ if(nw>=t) milestones[t]=true; });
 
+  renderAccount();
   renderAll();
+  recordBest();
 
   document.querySelectorAll('#tabs button').forEach(b=>{
     b.onclick=()=>switchView(b.dataset.view);
   });
+
+  $('pauseBtn').onclick=togglePause;
+
+  // auth modal wiring
+  document.querySelectorAll('#authTabs button').forEach(b=> b.onclick=()=>setAuthMode(b.dataset.mode));
+  $('authSubmit').onclick=submitAuth;
+  $('authCancel').onclick=closeAuth;
+  $('authBg').onclick=e=>{ if(e.target===$('authBg')) closeAuth(); };
+  $('authPass').addEventListener('keydown',e=>{ if(e.key==='Enter') submitAuth(); });
+  $('authUser').addEventListener('keydown',e=>{ if(e.key==='Enter') $('authPass').focus(); });
 
   $('resetBtn').onclick=()=>{
     if(confirm('Reset the game and start over with $1,000?')){
@@ -1217,7 +1439,7 @@ function init(){
 
   $('articleClose').onclick=closeArticle;
   $('articleBg').onclick=e=>{ if(e.target===$('articleBg')) closeArticle(); };
-  $('modalClose').onclick=()=>{ $('modalBg').classList.remove('show'); resumeSim(); };
+  $('modalClose').onclick=()=>{ $('modalBg').classList.remove('show'); updateTimer(); };
 
   window.addEventListener('resize',()=>{ renderChart(); renderEquity(); });
 
