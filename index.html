@@ -411,6 +411,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
    WALL STREET TYCOON  —  simulated stock market engine
@@ -1276,8 +1277,8 @@ function loadUserState(){
   save();
 }
 function logout(){
-  currentUser=null; localStorage.removeItem('wst_current');
-  loadUserState();
+  currentUser=null; localStorage.removeItem('wst_current'); lastSubmitted=0;
+  loadUserState(); fetchRemote();
   toast('Logged out — now playing as Guest.','');
 }
 function renderAccount(){
@@ -1317,37 +1318,71 @@ function submitAuth(){
     a[u]={pass:hashPass(p), best:START_CASH, created:Date.now()};
     setAccounts(a);
     currentUser=u; localStorage.setItem('wst_current',u);
-    closeAuth(); loadUserState(); recordBest();
+    lastSubmitted=0;
+    closeAuth(); loadUserState(); recordBest(); maybeSubmit(true); fetchRemote();
     toast('Account created — welcome, '+u+'!','win');
   }else{
     const a=getAccounts();
     if(!a[u]){ err.textContent='No account with that username. Try Register.'; return; }
     if(a[u].pass!==hashPass(p)){ err.textContent='Incorrect password.'; return; }
     currentUser=u; localStorage.setItem('wst_current',u);
-    closeAuth(); loadUserState();
+    lastSubmitted=0;
+    closeAuth(); loadUserState(); maybeSubmit(true); fetchRemote();
     toast('Welcome back, '+u+'!','win');
   }
 }
 
-/* ---------------- leaderboard ---------------- */
-// Seeded "world" high scores (this is an offline build with no server).
-const WORLD_SCORES=[
-  {name:'QuantKing',score:48250000},
-  {name:'AlgoWolf',score:31740000},
-  {name:'Daytona_Dan',score:19880000},
-  {name:'BullRunBella',score:12450000},
-  {name:'ShortSqueezer',score:7320000},
-  {name:'DiamondHands',score:4180000},
-  {name:'MacroMaven',score:2560000},
-  {name:'TheOracle',score:1490000},
-  {name:'CandleNinja',score:865000},
-  {name:'VolHunter',score:512000},
-  {name:'PipPirate',score:318000},
-  {name:'SwingLord',score:184000},
-  {name:'MoonTrader',score:96500},
-  {name:'RookieRick',score:41200},
-  {name:'PaperHandPete',score:12800},
-];
+/* ==================== REAL GLOBAL LEADERBOARD (Supabase) ====================
+   Paste your Supabase project URL and anon public key below. Until they are
+   filled in, the leaderboard runs in local-only mode (real local players only,
+   no invented users). Once configured, scores are shared and update live. */
+const SUPABASE_URL      = '';   // e.g. 'https://abcdxyz.supabase.co'
+const SUPABASE_ANON_KEY = '';   // the anon / public key (eyJ...)
+
+let sb=null, sbConfigured=false, sbStatus='local'; // 'local' | 'connecting' | 'live' | 'error'
+let remoteScores=[];           // authoritative list from the server
+let lastSubmitted=0, lastSubmitTime=0;
+
+function initSupabase(){
+  if(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase){
+    try{
+      sb=window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{persistSession:false}});
+      sbConfigured=true; sbStatus='connecting';
+      fetchRemote();
+      subscribeRealtime();
+    }catch(e){ sb=null; sbConfigured=false; sbStatus='error'; }
+  }
+}
+async function fetchRemote(){
+  if(!sb) return;
+  try{
+    const {data,error}=await sb.from('leaderboard').select('name,score,updated_at').order('score',{ascending:false}).limit(100);
+    if(error) throw error;
+    remoteScores=data||[]; sbStatus='live';
+  }catch(e){ sbStatus='error'; }
+  if(currentView==='ranking') renderRanking();
+}
+function subscribeRealtime(){
+  if(!sb) return;
+  try{
+    sb.channel('lb-changes')
+      .on('postgres_changes',{event:'*',schema:'public',table:'leaderboard'}, ()=>fetchRemote())
+      .subscribe(status=>{ if(status==='SUBSCRIBED'){ sbStatus='live'; if(currentView==='ranking') renderRanking(); } });
+  }catch(e){}
+}
+// Push the current player's best to the server (logged-in only, throttled, score-only-increases via RPC).
+function maybeSubmit(force){
+  if(!sb || !currentUser) return;
+  const now=Date.now();
+  if(!force && now-lastSubmitTime<4000) return;
+  const a=getAccounts();
+  const best=Math.max(netWorth(), (a[currentUser]&&a[currentUser].best)||START_CASH);
+  if(best<=lastSubmitted) return;
+  lastSubmitTime=now; lastSubmitted=best;
+  sb.rpc('submit_score',{p_name:currentUser, p_score:best}).catch(()=>{ sbStatus='error'; });
+}
+
+/* ---------------- local best tracking ---------------- */
 function playerBest(){
   if(currentUser){ const a=getAccounts(); return Math.max((a[currentUser]&&a[currentUser].best)||START_CASH, netWorth()); }
   return Math.max(parseFloat(localStorage.getItem('wst_guest_best'))||START_CASH, netWorth());
@@ -1357,18 +1392,29 @@ function recordBest(){
   if(currentUser){
     const a=getAccounts();
     if(a[currentUser] && nw>a[currentUser].best){ a[currentUser].best=nw; setAccounts(a); }
+    maybeSubmit();
   }else{
     const g=parseFloat(localStorage.getItem('wst_guest_best'))||START_CASH;
     if(nw>g) localStorage.setItem('wst_guest_best', String(nw));
   }
 }
+
 function buildLeaderboard(){
-  const rows=WORLD_SCORES.map(w=>({name:w.name, score:w.score, world:true}));
-  const a=getAccounts();
-  Object.keys(a).forEach(u=>{
-    rows.push({name:u, score:(u===currentUser?Math.max(a[u].best,netWorth()):a[u].best), you:u===currentUser});
-  });
-  if(!currentUser) rows.push({name:'You (Guest)', score:playerBest(), you:true});
+  let rows=[];
+  if(sbConfigured && remoteScores.length){
+    rows=remoteScores.map(r=>({name:r.name, score:r.score, you:r.name===currentUser}));
+    if(currentUser){
+      const live=playerBest();
+      const me=rows.find(r=>r.name===currentUser);
+      if(me) me.score=Math.max(me.score, live);
+      else rows.push({name:currentUser, score:live, you:true});
+    }
+  }else{
+    // local-only fallback — real local accounts only, never invented users
+    const a=getAccounts();
+    rows=Object.keys(a).map(u=>({name:u, score:(u===currentUser?Math.max(a[u].best,netWorth()):a[u].best), you:u===currentUser}));
+    if(!currentUser) rows.push({name:'You (Guest)', score:playerBest(), you:true});
+  }
   rows.sort((x,y)=>y.score-x.score);
   return rows;
 }
@@ -1376,18 +1422,33 @@ function renderRanking(){
   recordBest();
   const rows=buildLeaderboard();
   const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
-  $('lbBody').innerHTML=rows.slice(0,20).map((r,i)=>`
-    <tr class="lb-row${r.you?' you':''}">
-      <td class="lb-rank">${medal(i)}</td>
-      <td>${r.name}${r.you?'<span class="lb-you-tag">YOU</span>':r.world?' <span class="lb-world-tag">· world</span>':''}</td>
-      <td class="r lb-score">${fmt(r.score)}</td>
-    </tr>`).join('');
+
+  if(rows.length===0){
+    $('lbBody').innerHTML=`<tr><td colspan="3" class="empty">No scores yet — be the first to post one! ${sbConfigured?'':'Log in and start trading.'}</td></tr>`;
+  }else{
+    $('lbBody').innerHTML=rows.slice(0,20).map((r,i)=>`
+      <tr class="lb-row${r.you?' you':''}">
+        <td class="lb-rank">${medal(i)}</td>
+        <td>${escapeHtml(r.name)}${r.you?'<span class="lb-you-tag">YOU</span>':''}</td>
+        <td class="r lb-score">${fmt(r.score)}</td>
+      </tr>`).join('');
+  }
+
+  // status + your-rank line
+  const status = sbStatus==='live' ? '<span style="color:var(--green)">● Live</span> — real global scores, updating in real time'
+              : sbStatus==='connecting' ? '<span style="color:var(--accent)">● Connecting…</span>'
+              : sbStatus==='error' ? '<span style="color:var(--red)">● Offline</span> — showing local scores'
+              : '<span style="color:var(--muted)">● Local mode</span> — global leaderboard not configured yet';
   const youIdx=rows.findIndex(r=>r.you);
-  const you=$('lbYou');
-  you.innerHTML = youIdx>=0
-    ? `<div class="lb-note">Your global rank: <strong style="color:var(--accent)">#${youIdx+1}</strong> of ${rows.length} traders · Best net worth <strong>${fmt(rows[youIdx].score)}</strong>${youIdx>=20?' — keep climbing to break into the top 20!':''}</div>`
-    : '';
+  let line='';
+  if(youIdx>=0){
+    line=`Your rank: <strong style="color:var(--accent)">#${youIdx+1}</strong> of ${rows.length} · Best net worth <strong>${fmt(rows[youIdx].score)}</strong>${youIdx>=20?' — climb into the top 20!':''}`;
+  }else if(sbConfigured && !currentUser){
+    line='Log in to submit your score to the global leaderboard.';
+  }
+  $('lbYou').innerHTML=`<div class="lb-note">${status}${line?'<br>'+line:''}</div>`;
 }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ---------------- views ---------------- */
 function switchView(v){
@@ -1396,6 +1457,7 @@ function switchView(v){
   $('view-markets').classList.toggle('active', v==='markets');
   $('view-history').classList.toggle('active', v==='history');
   $('view-ranking').classList.toggle('active', v==='ranking');
+  if(v==='ranking') fetchRemote(); // pull the freshest scores when opening the board
   renderAll();
 }
 
@@ -1477,6 +1539,9 @@ function init(){
   $('modalClose').onclick=()=>{ $('modalBg').classList.remove('show'); updateTimer(); };
 
   window.addEventListener('resize',()=>{ renderChart(); renderEquity(); });
+
+  // Connect to the real global leaderboard (no-op if not configured).
+  initSupabase();
 
   // Time runs automatically — start the clock at 1×.
   setSpeed(2000);
