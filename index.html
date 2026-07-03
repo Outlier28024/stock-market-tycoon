@@ -1336,8 +1336,8 @@ function submitAuth(){
    Paste your Supabase project URL and anon public key below. Until they are
    filled in, the leaderboard runs in local-only mode (real local players only,
    no invented users). Once configured, scores are shared and update live. */
-const SUPABASE_URL      = '';   // e.g. 'https://abcdxyz.supabase.co'
-const SUPABASE_ANON_KEY = '';   // the anon / public key (eyJ...)
+const SUPABASE_URL      = 'https://qnobhyjmcptvgttfgdtg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_kHwIpBJCPJCVkqnTyYuSPA_sfASG9HG'; // publishable (client) key — safe to embed
 
 let sb=null, sbConfigured=false, sbStatus='local'; // 'local' | 'connecting' | 'live' | 'error'
 let remoteScores=[];           // authoritative list from the server
@@ -1379,7 +1379,10 @@ function maybeSubmit(force){
   const best=Math.max(netWorth(), (a[currentUser]&&a[currentUser].best)||START_CASH);
   if(best<=lastSubmitted) return;
   lastSubmitTime=now; lastSubmitted=best;
-  sb.rpc('submit_score',{p_name:currentUser, p_score:best}).catch(()=>{ sbStatus='error'; });
+  sb.rpc('submit_score',{p_name:currentUser, p_score:best}).then(
+    ({error})=>{ if(error){ sbStatus='error'; } },
+    ()=>{ sbStatus='error'; }
+  );
 }
 
 /* ---------------- local best tracking ---------------- */
