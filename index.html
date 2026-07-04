@@ -212,6 +212,13 @@
   #pauseBtn{min-width:106px;}
   .pause-active{background:var(--green)!important;color:#04231a!important;border-color:var(--green)!important;}
 
+  /* macro-event banner */
+  .macro-banner{display:none;align-items:center;gap:10px;border-radius:12px;padding:11px 16px;margin-bottom:16px;font-size:13px;border:1px solid;}
+  .macro-banner.show{display:flex;}
+  .macro-banner.bad{background:rgba(234,57,67,.10);border-color:rgba(234,57,67,.45);color:#ffb3b8;}
+  .macro-banner.good{background:rgba(22,199,132,.10);border-color:rgba(22,199,132,.45);color:#8ef0c8;}
+  .macro-banner .mb-prog{margin-left:auto;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
+
   /* leaderboard */
   .lb-note{font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.55;}
   .lb-table td,.lb-table th{padding:11px 8px;}
@@ -268,6 +275,8 @@
     <span style="color:var(--muted);font-size:12px;">Sentiment: <strong id="sentiment">Neutral</strong></span>
     <div class="acct" id="accountArea" style="margin-left:auto;"></div>
   </div>
+
+  <div class="macro-banner" id="macroBanner"></div>
 
   <!-- ===================== MARKETS VIEW ===================== -->
   <div class="view active" id="view-markets">
@@ -517,6 +526,7 @@ function freshState(){
     equityCurve:[{day:1, nw:START_CASH}],
     selected:0,
     marketMood:0, // -1..1 broad market sentiment
+    macro:null,   // active macro regime (war, crisis, boom, …) or null
   };
 }
 
@@ -568,6 +578,7 @@ function migrate(s){
   if(!Array.isArray(s.trades)) s.trades=[];
   if(!Array.isArray(s.equityCurve) || !s.equityCurve.length)
     s.equityCurve=[{day:s.day, nw:s.cash+s.stocks.reduce((a,x)=>a+x.price*x.shares,0)}];
+  if(!s.macro || typeof s.macro!=='object') s.macro=null;
   return s;
 }
 
@@ -615,6 +626,95 @@ function gaussian(){
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
 }
 
+/* Tunable simulation parameters. Calibrated so the broad market reliably trends
+   upward over 1000+ days (drift dominates variance) while staying lively day-to-day. */
+const SIM = {
+  longDrift:  0.00042,  // secular daily uptrend applied to every stock
+  newsComp:   0.00016,  // offsets the variance drag from random news shocks
+  volScale:   0.45,     // scales idiosyncratic volatility toward realistic levels
+  momo:       0.10,     // momentum carry-over (damped to limit runaway trends)
+  newsMag:    0.65,     // per-stock news shock size
+  sectorMag:  0.65,     // sector news shock size
+  swanP:      0.015,    // daily black-swan probability
+  macroScale: 0.70,     // scales macro-event daily drift
+  macroP:     0.006,    // daily probability of starting a macro event
+};
+
+/* Big multi-day macro regimes. dailyDrift = broad daily drag/boost while active,
+   vol = volatility multiplier, sector = extra daily drift per sector,
+   mood = one-off sentiment jolt at onset. Durations are in days. */
+const MACRO_EVENTS = [
+  {id:'war', name:'Geopolitical War', tag:'bad', minDur:20, maxDur:55, mood:-0.55, dailyDrift:-0.0016, vol:1.6,
+    sector:{Energy:+0.0028, Industry:+0.0022, Mining:+0.0014, Finance:-0.0012, Retail:-0.0016, Tech:-0.0012, Health:-0.0004},
+    onset:'⚔️ War breaks out: energy and defense stocks surge while risk assets tumble on fear.',
+    end:'🕊️ Ceasefire reached — a relief rally spreads as geopolitical tensions ease.'},
+  {id:'crisis', name:'Economic Crisis', tag:'bad', minDur:35, maxDur:80, mood:-0.75, dailyDrift:-0.0022, vol:1.8,
+    sector:{Finance:-0.0032, Retail:-0.0022, Industry:-0.0018, Tech:-0.0016, Energy:-0.0012, Health:-0.0004, Mining:+0.0012},
+    onset:'💥 Financial crisis erupts: credit markets freeze and stocks slide into a bear market.',
+    end:'📈 The economy claws back — recovery takes hold as the crisis fades.'},
+  {id:'pandemic', name:'Global Pandemic', tag:'bad', minDur:30, maxDur:70, mood:-0.6, dailyDrift:-0.0014, vol:1.5,
+    sector:{Health:+0.0024, Tech:+0.0014, Retail:-0.0026, Industry:-0.0020, Energy:-0.0022, Finance:-0.0012, Mining:-0.0006},
+    onset:'🦠 A global pandemic hits: lockdowns crush travel and retail while health and tech hold up.',
+    end:'💉 Pandemic recedes as economies reopen and activity rebounds.'},
+  {id:'oil', name:'Energy Shock', tag:'bad', minDur:18, maxDur:45, mood:-0.4, dailyDrift:-0.0010, vol:1.4,
+    sector:{Energy:+0.0032, Mining:+0.0014, Industry:-0.0018, Retail:-0.0016, Tech:-0.0008, Finance:-0.0008},
+    onset:'🛢️ Energy shock: a supply squeeze sends oil soaring and squeezes everyone else.',
+    end:'⛽ Energy prices normalize as supply fears ease.'},
+  {id:'boom', name:'Economic Boom', tag:'good', minDur:30, maxDur:75, mood:+0.6, dailyDrift:+0.0022, vol:1.15,
+    sector:{Tech:+0.0022, Finance:+0.0018, Retail:+0.0018, Industry:+0.0016, Energy:+0.0010, Health:+0.0008, Mining:+0.0006},
+    onset:'🚀 Economic boom: soaring confidence and strong growth lift stocks across the board.',
+    end:'🛬 The boom cools to a steadier, more sustainable pace.'},
+  {id:'tech', name:'Tech Revolution', tag:'good', minDur:25, maxDur:60, mood:+0.5, dailyDrift:+0.0014, vol:1.25,
+    sector:{Tech:+0.0034, Industry:+0.0014, Finance:+0.0010, Health:+0.0012, Retail:+0.0006, Energy:-0.0004},
+    onset:'🤖 A technology revolution ignites: breakthrough innovation drives a growth-stock frenzy.',
+    end:'🔧 The tech frenzy matures as valuations digest the gains.'},
+  {id:'stimulus', name:'Central Bank Stimulus', tag:'good', minDur:20, maxDur:50, mood:+0.5, dailyDrift:+0.0018, vol:1.1,
+    sector:{Finance:+0.0022, Retail:+0.0016, Tech:+0.0018, Industry:+0.0014, Health:+0.0008, Energy:+0.0008, Mining:+0.0006},
+    onset:'🏦 Central banks unleash stimulus: rate cuts and liquidity send stocks broadly higher.',
+    end:'📉 Stimulus winds down as policy returns to normal.'},
+];
+
+const MACRO_GOOD = MACRO_EVENTS.filter(e=>e.tag==='good');
+const MACRO_BAD  = MACRO_EVENTS.filter(e=>e.tag==='bad');
+// Recovery rally that follows every crisis — makes downturns mean-revert (V-shaped),
+// so bad events are temporary dents rather than permanent drags on the long-run trend.
+const RECOVERY = {id:'recovery', name:'Recovery Rally', tag:'good', dailyDrift:+0.0016, vol:1.15,
+  sector:{Tech:+0.0016, Finance:+0.0016, Retail:+0.0014, Industry:+0.0014, Energy:+0.0010, Health:+0.0010, Mining:+0.0008},
+  onset:'📈 Recovery rally: the market rebounds as the worst of the shock passes.',
+  end:'✅ Recovery complete — conditions return to normal.'};
+function macroDef(id){ return id==='recovery' ? RECOVERY : MACRO_EVENTS.find(e=>e.id===id); }
+
+// Advance the macro regime: expire the current one (with a recovery after crises)
+// or possibly start a new one. Returns the active event definition (or null).
+function stepMacro(pending){
+  if(state.macro){
+    state.macro.daysLeft--;
+    if(state.macro.daysLeft<=0){
+      const ev=macroDef(state.macro.id);
+      pending.push({type: ev.tag==='bad'?'good':'neutral', market:true, macro:true, macroPhase:'end',
+        macroName:ev.name, day:state.day, change:null, head:'🌍 '+ev.name+' ends', detail:ev.end});
+      if(ev.tag==='bad'){
+        // kick off a recovery rally that unwinds much of the drawdown
+        const rdur=Math.round(state.macro.totalDur*0.55);
+        state.macro={id:'recovery', daysLeft:rdur, totalDur:rdur, startDay:state.day};
+        state.marketMood=Math.max(-1,Math.min(1, state.marketMood+0.5));
+      }else{
+        state.marketMood += -0.2; // gentle cooldown after a boom
+        state.macro=null;
+      }
+    }
+  } else if(Math.random()<SIM.macroP){
+    // 50/50 good vs bad so events are net-neutral on the long-run trend
+    const ev=rnd(Math.random()<0.5 ? MACRO_GOOD : MACRO_BAD);
+    const dur=Math.round(ev.minDur+Math.random()*(ev.maxDur-ev.minDur));
+    state.macro={id:ev.id, daysLeft:dur, totalDur:dur, startDay:state.day};
+    state.marketMood=Math.max(-1,Math.min(1, state.marketMood+ev.mood));
+    pending.push({type:ev.tag, market:true, macro:true, macroPhase:'onset',
+      macroName:ev.name, day:state.day, change:null, head:'🌍 '+ev.name+' begins', detail:ev.onset});
+  }
+  return state.macro ? macroDef(state.macro.id) : null;
+}
+
 function advanceDay(){
   state.day++;
 
@@ -629,7 +729,7 @@ function advanceDay(){
   // Sector-wide news (~32% of days)
   if(Math.random()<0.32){
     const n = rnd(SECTOR_NEWS);
-    const strength = (n.t==='good'?1:-1)*(0.02+Math.random()*0.04);
+    const strength = (n.t==='good'?1:-1)*(0.02+Math.random()*0.04)*SIM.sectorMag;
     sectorShock[n.sector] = (sectorShock[n.sector]||0)+strength;
     pending.push({type:n.t, head:n.head, detail:n.detail, sector:n.sector, day:state.day, change:null});
   }
@@ -639,15 +739,15 @@ function advanceDay(){
     if(Math.random()<0.10){
       const tmpl = rnd(NEWS_TEMPLATES);
       const dir  = tmpl.t==='good'?1:-1;
-      const mag  = (0.03+Math.random()*0.09)*tmpl.mult;
+      const mag  = (0.03+Math.random()*0.09)*tmpl.mult*SIM.newsMag;
       stockShock[s.sym] = (stockShock[s.sym]||0)+dir*mag;
       pending.push({type:tmpl.t, head:tmpl.head(s), detail:tmpl.detail(s), sym:s.sym, day:state.day, change:null});
     }
   });
 
-  // Rare black-swan crash or boom (~3%)
-  if(Math.random()<0.03){
-    const crash = Math.random()<0.55;
+  // Rare black-swan crash or boom
+  if(Math.random()<SIM.swanP){
+    const crash = Math.random()<0.5;
     const mag = 0.06+Math.random()*0.10;
     state.marketMood += crash?-0.8:0.6;
     state.stocks.forEach(s=> stockShock[s.sym]=(stockShock[s.sym]||0)+(crash?-mag:mag)*(0.6+Math.random()*0.8));
@@ -658,16 +758,28 @@ function advanceDay(){
                    :'Euphoria takes hold as buyers chase almost every name sharply higher.'});
   }
 
+  // Macro regime (war, crisis, boom, …): expire/start, then read active effects.
+  const macroEv = stepMacro(pending);
+  const macroDrift   = macroEv ? macroEv.dailyDrift*SIM.macroScale : 0;
+  const macroVolMult = macroEv ? macroEv.vol : 1;
+  const macroSector  = macroEv ? macroEv.sector : {};
+
   // ---- Update each stock: price, OHLC, volume ----
   state.stocks.forEach(s=>{
     s.prevClose = s.price;
 
-    let ret = s.drift;                            // baseline drift
-    ret += s.vol*gaussian();                      // idiosyncratic volatility
+    const evol = s.vol*SIM.volScale;              // effective idiosyncratic volatility
+    let ret = s.drift;                            // baseline per-stock drift
+    ret += 0.5*evol*evol;                         // offset volatility variance drag
+    ret += SIM.newsComp;                          // offset news-shock variance drag
+    ret += SIM.longDrift*(0.6+0.4*s.beta);        // secular market uptrend, higher-beta a touch more
+    ret += macroDrift*s.beta;                     // active macro regime, scaled by beta
+    ret += (macroSector[s.sector]||0);            // macro sector tilt (e.g. energy up in a war)
+    ret += evol*macroVolMult*gaussian();          // idiosyncratic volatility (elevated during events)
     ret += state.marketMood*0.010*s.beta;         // market beta influence
     ret += (sectorShock[s.sector]||0);            // sector shock
     ret += (stockShock[s.sym]||0);                // individual shock
-    ret += s.momentum*0.25;                       // momentum carry-over
+    ret += s.momentum*SIM.momo;                   // momentum carry-over
 
     s.momentum = s.momentum*0.6 + ret*0.4;
     s.momentum = Math.max(-0.05, Math.min(0.05, s.momentum));
@@ -701,7 +813,7 @@ function advanceDay(){
       item.article=buildSectorArticle(item,changes);
     }else if(item.market){
       item.change=changes.reduce((a,c)=>a+c.pc,0)/changes.length;
-      item.article=buildSwanArticle(item,changes);
+      item.article=item.macro ? buildMacroArticle(item,changes) : buildSwanArticle(item,changes);
     }
   });
   pending.forEach(it=> state.news.unshift(it));
@@ -762,6 +874,24 @@ function buildStockArticle(s, item){
     byline:`WST Newswire · Equity Desk · Day ${item.day}`,
     stat:{ price:s.price, pe, cap, eps:s.eps, dy, beta:s.beta, sector:s.sector, target:tgt, rating }
   };
+}
+
+function buildMacroArticle(item, changes){
+  const avg=changes.reduce((a,c)=>a+c.pc,0)/changes.length;
+  const onset=item.macroPhase==='onset';
+  const sorted=[...changes].sort((a,b)=>b.pc-a.pc);
+  const win=sorted[0], lose=sorted[sorted.length-1];
+  const body=[
+    item.detail,
+    onset
+      ? `This is a market-wide regime shift, not a single-stock story. The index moved ${pctTxt(avg)} on the day, with ${win.s.sym} (${pctTxt(win.pc)}) holding up best and ${lose.s.sym} (${pctTxt(lose.pc)}) hit hardest. Macro shocks push correlations toward 1 — most names move together — so the usual stock-picking cushions matter less than your overall exposure.`
+      : `The regime is ending. The index moved ${pctTxt(avg)} today as the market re-prices for calmer conditions. Turning points like this often see leadership rotate, with the hardest-hit sectors bouncing most sharply.`,
+    onset
+      ? `The textbook playbook: rotate toward the sectors that benefit (or at least hold up), keep some cash as dry powder, and avoid over-leveraging into the volatility. Defensive, dividend-paying names and low-beta stocks typically weather these storms better than speculative high-beta growth.`
+      : `History's lesson is that markets are resilient: crises and shocks are painful but temporary, and over the long run the broad market has trended upward through every one of them. Investors who stayed diversified and kept adding through the downturn were usually rewarded on the other side.`,
+    `Sentiment now reads ${sentimentInfo().label}. Zoom out: single events dominate the headlines, but time in the market — not timing the market — is what compounds wealth.`
+  ];
+  return {body, byline:`WST Newswire · Macro Desk · Day ${item.day}`, stat:null};
 }
 
 function buildSectorArticle(item, changes){
@@ -869,9 +999,24 @@ function renderAll(){
   $('day').textContent=state.day;
   const s=sentimentInfo();
   const sent=$('sentiment'); sent.textContent=s.label; sent.style.color=s.col;
+  renderMacroBanner();
   if(currentView==='markets'){ renderChart(); renderQuoteStats(); }
   else if(currentView==='history'){ renderEquity(); renderHistory(); }
   else if(currentView==='ranking'){ renderRanking(); }
+}
+
+function renderMacroBanner(){
+  const el=$('macroBanner'); if(!el) return;
+  if(state.macro){
+    const ev=macroDef(state.macro.id);
+    if(!ev){ el.className='macro-banner'; el.innerHTML=''; return; }
+    const elapsed=state.macro.totalDur-state.macro.daysLeft+1;
+    el.className='macro-banner show '+ev.tag;
+    el.innerHTML=`<span>🌍 Active event: <strong>${ev.name}</strong> — ${ev.tag==='bad'?'markets under stress, elevated volatility':'tailwinds lifting stocks'}</span>`+
+                 `<span class="mb-prog">Day ${elapsed} of ${state.macro.totalDur}</span>`;
+  }else{
+    el.className='macro-banner'; el.innerHTML='';
+  }
 }
 
 function renderHeader(){
